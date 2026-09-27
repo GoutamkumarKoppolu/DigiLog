@@ -86,6 +86,16 @@ export const HELP = {
     ],
     example: "Home loan EMI ₹25,000 on the 5th, ₹65,000 pending. Salary on the 1st → on the 5th, ₹25,000 is added and ₹40,000 is left. Next month ₹25,000 again, then a last ₹15,000, and it's Completed.",
   },
+  subscriptions: {
+    title: "Tracking subscriptions",
+    body: [
+      "Keep a list of what you pay for regularly, like Netflix, Spotify, iCloud or Amazon Prime, with the amount, how you pay and when it's taken: a day each month, or a date each year.",
+      "The top shows what they cost you a month and a year (a yearly plan counts as a twelfth each month), and By category shows where it goes.",
+      "Pick a reminder and your phone notifies you at 9 AM before it renews. On a free trial, you're also reminded the day before it ends, so you can cancel in time.",
+      "This is only for tracking: it doesn't change your balance. Cancel one to keep it in the list under Cancelled, or delete it.",
+    ],
+    example: "Netflix ₹649 monthly on the 5th, paid with HDFC card, reminder 1 day before → a notification on the 4th at 9 AM: \"Netflix renews tomorrow · ₹649 · HDFC card\".",
+  },
   tags: {
     title: "How tags help",
     body: [

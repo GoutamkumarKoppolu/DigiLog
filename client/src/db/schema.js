@@ -48,3 +48,9 @@ export const STORES_V6 = {
   recurring_payments: "++id, created_at",
   recurring_runs: "++id, recurring_id, &[recurring_id+month]",
 };
+
+// Version 7: subscriptions tracked by hand (see features/subscriptions). For
+// tracking and reminders only; never part of the balance.
+export const STORES_V7 = {
+  subscriptions: "++id, created_at",
+};

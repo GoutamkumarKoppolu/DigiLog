@@ -19,6 +19,7 @@ import { BudgetsPage } from "./features/budgets";
 import { BillsPage } from "./features/bills";
 import { BorrowingPage } from "./features/borrowing";
 import { RecurringEngine, RecurringPage } from "./features/recurring";
+import { SubscriptionReminders, SubscriptionsPage } from "./features/subscriptions";
 
 // Page registry. `tab` is the bottom-nav tab that stays highlighted; `add`
 // shows the + (add transaction) button; `hero` means the page starts with
@@ -39,6 +40,7 @@ const ROUTES = {
   budgets: { page: BudgetsPage, tab: "more", parent: "more" },
   bills: { page: BillsPage, tab: "more", parent: "more" },
   borrowing: { page: BorrowingPage, tab: "more", parent: "more" },
+  subscriptions: { page: SubscriptionsPage, tab: "more", parent: "more" },
 };
 
 const TABS = [
@@ -59,6 +61,7 @@ export default function App() {
   return (
     <LedgerProvider>
       <RecurringEngine />
+      <SubscriptionReminders />
       <div className="app">
         <main className="app-main">
           <Page navigate={navigate} param={param} onOpenTransaction={(transaction) => setSheet({ transaction })} />

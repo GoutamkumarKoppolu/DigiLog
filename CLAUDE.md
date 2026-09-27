@@ -72,6 +72,9 @@ client/src/
                            #/bills/<folder>/<bill>); files stored as Blobs with a small preview; thumbnail.js makes previews
     borrowing/             "Borrowed & lent" (never call it "loans" in the UI): per-person records with payments,
                            tabs Borrowed/Lent (DIRECTIONS in domain.js holds each tab's wording); not linked to the balance
+    subscriptions/         Subscriptions tracked by hand (monthly day / yearly date, typed payment method, category, trial);
+                           totals, renewing soon, by category; reminders.js schedules phone notifications (Local
+                           Notifications plugin, ids ≥ 1,000,000) and SubscriptionReminders (rendered once in App) resyncs them
     backup/                Backup & restore: backupFormat.js (format version, per-table specs, migrations, validation),
                            api.js (export all tables / restore in one transaction; Blobs ⇄ { $blob: base64, type })
   platform/files.js        Getting files out of the app: download / share sheet / open in the phone's viewer
@@ -84,7 +87,7 @@ client/src/
     themeStore.js          Saves the choice in localStorage; sets data-theme / data-accent / data-bg on <html>
     useTheme.js            React hook over the store
   db/
-    schema.js              Dexie store definitions (STORES = v1, then STORES_V2..V6 with each version's additions)
+    schema.js              Dexie store definitions (STORES = v1, then STORES_V2..V7 with each version's additions)
     index.js               Dexie instance, versioning, populate -> seed, storage.persist()
     seed.js                Default transaction types / payment methods / payment sources
     validators.js          Pure validation helpers (throw Error with user-facing messages)
@@ -113,6 +116,7 @@ client/src/
 | `borrow_payments` (v5) | `id`, `record_id`, `amount` (never more than what's left), `date`, `note`, `created_at` |
 | `recurring_payments` (v6) | `id`, `name`, `kind` (`expense` \| `saving`), `amount`, `tag`, `day` (1–31; last day in shorter months), `payment_method`, `payment_source`, `deduct_from_balance` (savings), `pending_start` / `duration` (totals, or `null`; the form shows what's *left* = total − payments made), `start_month`, `paused` / `skipped_months` (savings only), `completed` (by hand), `created_at` |
 | `recurring_runs` (v6) | `id`, `recurring_id`, `month`, `transaction_id` (may have been deleted), `created_at`; unique `[recurring_id+month]` so a month is never added twice |
+| `subscriptions` (v7) | `id`, `name`, `amount`, `cycle` (`monthly` \| `yearly`), `day` (1–31), `month` (yearly only), `payment_method` / `category` (free text), `trial_end` (date or `null`), `remind` (`off` \| `0` \| `1` \| `3` days before), `cancelled_at` (date or `null`), `created_at` |
 
 Conventions in the data layer:
 - Dates are stored as **strings** (`date` = `"YYYY-MM-DD"`, `created_at` = ISO). Month keys are `date.slice(0, 7)` (`"YYYY-MM"`). Never store `Date` objects. To turn a timestamp into a date, use `localDate()` / `today()` from `utils/format.js`, never `iso.slice(0, 10)`: that gives the UTC date, which is yesterday before 05:30 IST.
@@ -142,8 +146,9 @@ Conventions in the data layer:
 | Bills (More → Bills): folders (one level) of bills; add a bill by camera or file picker (photos/PDFs, originals kept, ≤ 50 MB each), each file = its own bill (named after the file, editable before saving), Add pages on a bill for multi-page bills; view photos in-app, Open in the phone's viewer, Share; rename/move bills, add/delete pages, rename/delete folders; search; included in backups | `features/bills/`, `platform/files.js`, `FileViewerPlugin.java` |
 | Borrowed & lent (More → Borrowed & lent): tabs Borrowed / Lent with the outstanding total; one record per borrowing/lending (person, amount, date, optional phone + why), expandable to its payments ("Repaid" / "Received"); payments capped at what's left; Completed automatically when fully paid, or Mark as completed / Reopen; Call and WhatsApp links; never touches the balance | `features/borrowing/` |
 | Recurring (bottom tab): EMIs/rent/SIPs with tag, day, method/source, Expense or Saving (+ deduct switch); added as normal transactions once the month's Salary is in and the day comes (note "Recurring: <name>"), caught up on next open, never twice a month; statuses Due / Waiting for salary / Deducted / Skipped / Paused / Starts / Completed; pending balance and payments left count down and end it; Mark as completed / Reopen; savings can pause or skip a month; per-month history; Edit/Delete keeps past payments | `features/recurring/` |
-| Backup & restore (More → Backup & restore): export everything (data, bill files + theme) to a JSON file (download on web, share sheet on Android); import validates the whole file, upgrades older backups, shows a summary, then replaces all data atomically | `features/backup/` |
-| Info buttons (ⓘ) explaining balance deduction, savings, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, recurring payments | `components/ui/InfoButton.jsx`, `content/help.js` |
+| Subscriptions (More → Subscriptions): name, amount, Monthly (day) or Yearly (date), typed payment method + category with suggestion chips, optional free trial (its end is the first charge; regular dates less than half a cycle after it are skipped); totals per month/year (yearly ÷ 12, trials excluded until they end), renewing in 7 days, by category; phone reminders at 9 AM (off / on the day / 1 / 3 days before) + the day before a trial ends; Cancel / Restart / Delete; never touches the balance | `features/subscriptions/` |
+| Backup & restore (More → Backup & restore): export everything (data, bill files + theme) to a JSON file (download on web; Save to phone → Documents/Expense Tracker, or Share, on Android); import validates the whole file, upgrades older backups, shows a summary, then replaces all data atomically | `features/backup/` |
+| Info buttons (ⓘ) explaining balance deduction, savings, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, recurring payments, subscriptions | `components/ui/InfoButton.jsx`, `content/help.js` |
 | Credit cards: card visuals, log spend / delete per card, period picker, 6-month utilization chart (palette `--cat-1..8`) | `features/cards/` |
 | Manage options: transaction types (with kind), payment methods, payment sources | `features/settings/SettingsPage.jsx` |
 | Themes: background (System / Light / Dark / Black AMOLED) × accent (Purple, Blue, Green, Teal, Orange, Pink), saved per device, applied instantly | `theme/`, `features/appearance/`, More → Appearance |
@@ -178,7 +183,7 @@ Conventions in the data layer:
 - Filtering loads whole tables and filters in memory. That's fine at personal scale, but use Dexie indexes if data grows.
 - Schema changes need a **new `db.version(n)`**, not an edit to an existing version. Editing one breaks existing installs, including users' phones.
 - Savings pots are keyed by tag name, and withdrawals store the tag string, so renames rely on the savings guard.
-- Unit tests cover only pure rules (budgets, bills, borrowing and recurring domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
+- Unit tests cover only pure rules (budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
 
 ## Rules for building new features
 

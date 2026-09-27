@@ -2329,3 +2329,52 @@ button.list-row:active {
   margin-bottom: -4px;
   padding: 0 4px;
 }
+
+/* ---------- Subscriptions ---------- */
+
+.category-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px 16px;
+}
+
+.category-row + .category-row {
+  border-top: 1px solid var(--border);
+}
+
+.category-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.category-row-name {
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-row-amount {
+  white-space: nowrap;
+}
+
+.category-row-bar {
+  display: block;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.category-row-bar .bar-fill {
+  display: block;
+}
+
+/* One line under the name; the full payment method is in the details. */
+.subscription-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

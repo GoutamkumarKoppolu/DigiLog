@@ -4,5 +4,11 @@
   "webDir": "dist",
   "android": {
     "adjustMarginsForEdgeToEdge": "auto"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notify",
+      "iconColor": "#6841E8"
+    }
   }
 }

@@ -261,6 +261,30 @@ export const TABLE_SPECS = {
       created_at: createdAt(r.created_at),
     };
   },
+  // Added in database v7. Subscriptions tracked by hand (not in the balance).
+  subscriptions: (r) => {
+    const cycle = text(r.cycle);
+    need(["monthly", "yearly"].includes(cycle), "cycle must be monthly or yearly");
+    const day = Number(r.day);
+    need(Number.isInteger(day) && day >= 1 && day <= 31, "day must be between 1 and 31");
+    const month = cycle === "yearly" ? Number(r.month) : null;
+    need(cycle !== "yearly" || (Number.isInteger(month) && month >= 1 && month <= 12), "month must be between 1 and 12");
+    const remind = text(r.remind);
+    return {
+      id: id(r.id),
+      name: required(r.name, "name"),
+      amount: amount(r.amount),
+      cycle,
+      day,
+      month,
+      payment_method: optional(r.payment_method),
+      category: optional(r.category),
+      trial_end: r.trial_end ? date(r.trial_end) : null,
+      remind: ["off", "0", "1", "3"].includes(remind) ? remind : "off",
+      cancelled_at: r.cancelled_at ? date(r.cancelled_at) : null,
+      created_at: createdAt(r.created_at),
+    };
+  },
 };
 
 // Tables whose `name` must be unique (they have a unique index).
@@ -283,6 +307,7 @@ export const TABLE_LABELS = {
   borrow_payments: "Borrowed & lent payments",
   recurring_payments: "Recurring payments",
   recurring_runs: "Recurring payment history",
+  subscriptions: "Subscriptions",
 };
 
 // Sub-budgets are one level deep: every parent_id must be an event (a row

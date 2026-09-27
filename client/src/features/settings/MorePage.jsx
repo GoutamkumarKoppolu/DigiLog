@@ -1,4 +1,4 @@
-import { ChartPie, CreditCard, DatabaseBackup, Handshake, Palette, ReceiptText, Settings, ShieldCheck, Tags, Wallet } from "lucide-react";
+import { ChartPie, CreditCard, DatabaseBackup, Handshake, Palette, ReceiptText, Settings, ShieldCheck, Tags, Tv, Wallet } from "lucide-react";
 import { useTheme } from "../../theme/useTheme";
 import { ACCENTS, BACKGROUNDS } from "../../theme/palettes";
 import PageHeader from "../../components/ui/PageHeader";
@@ -38,6 +38,13 @@ export default function MorePage({ navigate }) {
             title="Borrowed & lent"
             subtitle="Money you owe people, and money people owe you"
             onClick={() => navigate("borrowing")}
+          />
+          <ListRow
+            icon={Tv}
+            tone="warning"
+            title="Subscriptions"
+            subtitle="What you pay for monthly or yearly, with reminders"
+            onClick={() => navigate("subscriptions")}
           />
           <ListRow
             icon={ReceiptText}

@@ -180,3 +180,36 @@ describe("parseBackup: recurring payments", () => {
     ).toThrow(/appears twice/);
   });
 });
+
+describe("parseBackup: subscriptions", () => {
+  const s = {
+    id: 1,
+    name: "Prime",
+    amount: 1499,
+    cycle: "yearly",
+    day: 14,
+    month: 3,
+    payment_method: "HDFC card",
+    category: "Shopping",
+    trial_end: null,
+    remind: "1",
+    cancelled_at: null,
+    created_at: "2026-09-01T10:00:00.000Z",
+  };
+
+  it("imports subscriptions", () => {
+    const { tables } = parseBackup(backupWith({ subscriptions: [s] }));
+    expect(tables.subscriptions).toEqual([s]);
+  });
+
+  it("starts empty for a backup made before they existed, and fills in defaults", () => {
+    expect(parseBackup(backupWith({ transactions: [] })).tables.subscriptions).toEqual([]);
+    const monthly = { ...s, cycle: "monthly", month: 7, remind: undefined, payment_method: "" };
+    expect(parseBackup(backupWith({ subscriptions: [monthly] })).tables.subscriptions[0]).toMatchObject({ month: null, remind: "off", payment_method: null });
+  });
+
+  it("rejects bad rows", () => {
+    expect(() => parseBackup(backupWith({ subscriptions: [{ ...s, cycle: "weekly" }] }))).toThrow(/cycle must be monthly or yearly/);
+    expect(() => parseBackup(backupWith({ subscriptions: [{ ...s, month: 13 }] }))).toThrow(/month must be between 1 and 12/);
+  });
+});

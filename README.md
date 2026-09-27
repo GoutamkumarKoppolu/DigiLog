@@ -3,7 +3,7 @@
 A private, offline-first money tracker for Android and the web, designed to be used with one hand.
 Track what you earn, spend and save. EMIs, rent and SIPs are added for you each month once your salary is in. It knows *where* your savings came from, checks your card
 statements against what you actually spent, follows a loan or a trip across months, keeps a
-big event like a wedding or a new car on budget, keeps your important bills in folders, and tracks money you've borrowed from or lent to people.
+big event like a wedding or a new car on budget, keeps your important bills in folders, and tracks money you've borrowed from or lent to people. It also keeps an eye on your subscriptions and reminds you before they renew.
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
 <p align="center">
@@ -30,6 +30,7 @@ Most expense apps give you a single running total and nothing more. Real money i
 | **Big events blow past the plan.** A wedding or a new car has many parts, and it's hard to see what's left overall and for each part. | **Budgets**: give an event a total, optionally split it into sub-budgets (Venue, Catering…), and note down each spend. Every spend comes off its sub-budget and the total, you see what's left at a glance, and going over is shown in red instead of blocked. Budgets are a plan, so they never touch your balance. |
 | **Bills get lost when you need them.** The fridge breaks and the invoice is somewhere in a drawer or a chat. | **Bills**: photos and PDFs of bills, warranties and receipts, kept at original quality in folders you name (Warranties, Electricity, Car…). Each file is its own bill (pages can be added to keep a multi-page bill together), you can search by name, and open or share it straight from the app. Stored on the phone and included in backups. |
 | **"Who owes whom" lives in your head.** You borrowed ₹50K from a friend, lent ₹20K to a cousin, and they're paid back in parts over months. | **Borrowed & lent**: one entry per borrowing or lending (who, how much, when, why, phone). Add each part as it's paid back and see what's left; it's marked Completed when fully paid. Call or WhatsApp the person from the entry. Separate from your balance. |
+| **Subscriptions renew quietly**, and free trials turn into charges before you remember to cancel. | **Subscriptions**: list what you pay for monthly or yearly, with the payment method and category. See the total per month and per year, what renews this week, and a breakdown by category, and get a **phone notification** before each renewal and the day before a free trial ends. Tracking only, never part of your balance. |
 | **Your data is stuck on one phone.** | **Backup & restore** exports everything to one file you can keep on Drive. Import it on a new phone or reinstall. Older backups keep working as the app gains features. |
 | **Finance apps want your SMS, a login and your data on their servers.** | Fully offline. Data lives in the phone's local database (IndexedDB) and nothing is sent anywhere. |
 | **Apps built for two thumbs on a tablet.** | A **One UI-style, one-handed layout**: read-only information at the top, and everything you tap (tabs, the + button, forms, filters) within thumb reach at the bottom. |
@@ -89,10 +90,18 @@ Most expense apps give you a single running total and nothing more. Real money i
 - **Delete** an entry (with its payments) or a single payment (🗑 on its row); each asks first.
 - **Call or WhatsApp** the person straight from the entry. Kept separate from your balance, so nothing is counted twice.
 
+### Subscriptions
+- **Track every subscription** (More → Subscriptions): name, amount, **Monthly** (day of deduction) or **Yearly** (renewal date), the payment method you type in (e.g. "HDFC credit card"), and a category. Methods and categories you've used appear as tap-to-fill chips.
+- **What it costs:** the total a month and a year (yearly plans count as a twelfth a month), what's renewing in the next 7 days, and **By category**.
+- **Renewal dates roll forward on their own:** "Renews tomorrow", "Renews in 3 days"; the 31st becomes the last day of shorter months.
+- **Free trials:** set when the trial ends; it shows "Trial ends in 4 days", the first charge is on that date, and it only counts in the totals after that.
+- **Reminders:** phone notifications at 9 AM on the day, 1 day or 3 days before a renewal (your choice per subscription), plus the day before a trial ends. They're scheduled on the phone, so they work offline and with the app closed.
+- **Cancel** keeps it under *Cancelled* with the date; **Restart** brings it back; **Delete** removes it. Nothing here changes your balance.
+
 ### Make it yours
 - **Themes:** background **System / Light / Dark / Black (AMOLED)** × accent **Purple / Blue / Green / Teal / Orange / Pink**. All combinations meet WCAG AA text contrast.
 - **Manage options:** add or remove transaction types, payment methods and payment sources.
-- **Info buttons (ⓘ)** explain the less obvious features (balance deduction, savings, recurring payments, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, backups) right where you use them.
+- **Info buttons (ⓘ)** explain the less obvious features (balance deduction, savings, recurring payments, subscriptions, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, backups) right where you use them.
 
 ### Your data
 - **Backup & restore:** export everything (data, bill files and theme) to a JSON file. On Android, **Save to phone** writes it to *Documents › Expense Tracker* (it stays there even if the app is uninstalled) and **Share** sends it to Drive, WhatsApp or email; on the web it downloads. Each file is named with the date and time, so older backups aren't overwritten. Large backups are written in pieces so they don't run the phone out of memory.
@@ -124,6 +133,7 @@ Most expense apps give you a single running total and nothing more. Real money i
   <img src="docs/screenshots/bills.png" width="180" alt="Bills page with folders for Car, Electricity, Medical and Warranties" />
   <img src="docs/screenshots/bill-folder.png" width="180" alt="Warranties folder with three bills, one with two pages" />
   <img src="docs/screenshots/borrowed-lent.png" width="180" alt="Borrowed and lent page on the Lent tab, with Ravi expanded showing what's left" />
+  <img src="docs/screenshots/subscriptions.png" width="180" alt="Subscriptions: monthly and yearly totals, renewing this week and a free trial" />
 </p>
 
 ---
@@ -197,7 +207,7 @@ npx cap open android  # open the native project in Android Studio
 | UI | React 19, plain CSS with design tokens (light/dark + 6 accent palettes), [lucide](https://lucide.dev) icons |
 | Build | Vite 8, oxlint, Vitest for unit tests of the pure rules |
 | Storage | IndexedDB via [Dexie](https://dexie.org) 4 (versioned schema, on-device only) |
-| Android | [Capacitor](https://capacitorjs.com) 7, plus the Filesystem and Share plugins for backups and bills, and two small native plugins: system bar colours and opening a file in the phone's own viewer |
+| Android | [Capacitor](https://capacitorjs.com) 7, plus the Filesystem and Share plugins for backups and bills, Local Notifications for subscription reminders, and two small native plugins: system bar colours and opening a file in the phone's own viewer |
 | CI | GitHub Actions workflow that builds the APK |
 
 ## Project structure
@@ -211,7 +221,7 @@ client/
     domain/              Pure business rules (balance, deduction flag, filters)
     features/
       ledger/            Shared ledger state + transaction form/list
-      home/  report/  savings/  recurring/  tags/  budgets/  bills/  borrowing/  cards/  settings/  appearance/  backup/
+      home/  report/  savings/  recurring/  tags/  budgets/  bills/  borrowing/  subscriptions/  cards/  settings/  appearance/  backup/
     components/ui/       Design-system pieces: bottom sheet, page header, chips, switch, charts…
     platform/files.js    Getting files out of the app: download/share/open, chunked writes on Android
     theme/               Accent palettes + theme store
