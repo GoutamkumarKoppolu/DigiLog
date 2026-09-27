@@ -24,7 +24,7 @@ export default function SpendForm({ id, event, spend, initialBudgetId, onSubmit 
   ];
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="amount-field">
         <span className="field-label">Amount</span>
         <span className="amount-input">

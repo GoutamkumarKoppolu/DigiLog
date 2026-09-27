@@ -95,7 +95,7 @@ Most expense apps give you a single running total and nothing more. Real money i
 - **Info buttons (ⓘ)** explain the less obvious features (balance deduction, savings, recurring payments, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, backups) right where you use them.
 
 ### Your data
-- **Backup & restore:** export everything (data, bill files and theme) to a JSON file. Large backups are written in pieces so they don't run the phone out of memory. On Android this opens the share sheet (save to Drive/Files, or send it to yourself); on the web it downloads.
+- **Backup & restore:** export everything (data, bill files and theme) to a JSON file. On Android, **Save to phone** writes it to *Documents › Expense Tracker* (it stays there even if the app is uninstalled) and **Share** sends it to Drive, WhatsApp or email; on the web it downloads. Each file is named with the date and time, so older backups aren't overwritten. Large backups are written in pieces so they don't run the phone out of memory.
 - **Safe import:** the whole file is checked before anything changes; you see a summary, your data is replaced in a single step (all or nothing), and backups from older app versions are upgraded automatically.
 - **Offline and private:** no network calls during normal use and no account.
 

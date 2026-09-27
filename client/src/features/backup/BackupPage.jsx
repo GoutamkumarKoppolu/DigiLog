@@ -1,14 +1,22 @@
 import { useRef, useState } from "react";
-import { CircleCheck, Download, TriangleAlert, Upload } from "lucide-react";
+import { CircleCheck, Download, Share2, Smartphone, TriangleAlert, Upload } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import BottomSheet from "../../components/ui/BottomSheet";
 import ErrorBanner from "../../components/ui/ErrorBanner";
 import { dateHeading, localDate, today } from "../../utils/format";
 import { TABLE_LABELS, parseBackup } from "./backupFormat";
 import { exportBackup, restoreBackup } from "./api";
-import { saveTextFile } from "../../platform/files";
+import { isNative, saveTextFile, saveTextToDevice } from "../../platform/files";
 
 const LAST_EXPORT_KEY = "expense-tracker.lastExport";
+
+// "expense-tracker-backup-2026-09-27-1216.json": the time keeps several
+// backups from the same day side by side.
+function backupFileName() {
+  const now = new Date();
+  const hm = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  return `expense-tracker-backup-${today()}-${hm}.json`;
+}
 
 function readLastExport() {
   try {
@@ -69,14 +77,25 @@ export default function BackupPage({ navigate }) {
   const [busy, setBusy] = useState(false);
   const [restored, setRestored] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [savedTo, setSavedTo] = useState("");
 
-  async function handleExport() {
+  // "device" saves into Documents/Expense Tracker (a download in a browser);
+  // "share" opens the share sheet (Drive, WhatsApp, email…).
+  async function handleExport(target = "device") {
     try {
       setExporting(true);
       setError("");
       setSheetError("");
+      setSavedTo("");
       const backup = await exportBackup();
-      const saved = await saveTextFile(`expense-tracker-backup-${today()}.json`, JSON.stringify(backup, null, 2));
+      const json = JSON.stringify(backup, null, 2);
+      const name = backupFileName();
+      let saved;
+      if (target === "share") saved = await saveTextFile(name, json);
+      else {
+        setSavedTo(await saveTextToDevice(name, json));
+        saved = true;
+      }
       if (saved) {
         const now = new Date().toISOString();
         try {
@@ -152,15 +171,34 @@ export default function BackupPage({ navigate }) {
           </span>
           <h2>Export</h2>
           <p className="muted">
-            Saves all your transactions, savings, budgets, credit cards, bills (with their files), options and theme to one file. Do this before uninstalling the app
-            or changing phones, and keep the file somewhere safe (Drive, email to yourself).
+            Saves all your transactions, savings, recurring payments, budgets, borrowed & lent, credit cards, bills (with their files), options and theme to one file. Do this before uninstalling the app
+            or changing phones. Save to phone puts the file in Documents › Expense Tracker; Share sends it to Drive, WhatsApp or email.
           </p>
           <p className="muted backup-meta">
             {lastExport ? `Last exported: ${dateHeading(localDate(lastExport))}` : "You haven't exported a backup on this device yet."}
           </p>
-          <button type="button" className="btn btn-primary btn-block" onClick={handleExport} disabled={exporting}>
-            <Download size={18} /> {exporting ? "Preparing backup…" : "Export backup"}
-          </button>
+          {savedTo && (
+            <div className="success-note" role="status">
+              <CircleCheck size={20} aria-hidden="true" />
+              <p>
+                Saved to {savedTo}. To restore it later, tap Import backup and pick that file.
+              </p>
+            </div>
+          )}
+          {isNative() ? (
+            <div className="button-row">
+              <button type="button" className="btn btn-primary btn-block" onClick={() => handleExport("device")} disabled={exporting}>
+                <Smartphone size={18} /> {exporting ? "Preparing…" : "Save to phone"}
+              </button>
+              <button type="button" className="btn btn-soft btn-block" onClick={() => handleExport("share")} disabled={exporting}>
+                <Share2 size={18} /> Share
+              </button>
+            </div>
+          ) : (
+            <button type="button" className="btn btn-primary btn-block" onClick={() => handleExport("device")} disabled={exporting}>
+              <Download size={18} /> {exporting ? "Preparing backup…" : "Download backup"}
+            </button>
+          )}
         </section>
 
         <section className="card backup-card">
@@ -184,7 +222,7 @@ export default function BackupPage({ navigate }) {
           parsed={parsed}
           busy={busy}
           error={sheetError}
-          onExportFirst={handleExport}
+          onExportFirst={() => handleExport("device")}
           exporting={exporting}
           onConfirm={handleRestore}
           onClose={() => {

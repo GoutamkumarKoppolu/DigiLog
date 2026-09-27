@@ -17,7 +17,7 @@ export default function PaymentForm({ id, payment, max, onSubmit }) {
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="amount-field">
         <span className="field-label">Amount</span>
         <span className="amount-input">

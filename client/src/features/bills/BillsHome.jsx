@@ -59,6 +59,7 @@ export default function BillsHome({ folders, bills, error, setError, run, naviga
             <input
               className="input"
               type="search"
+              autoComplete="off"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search bills"

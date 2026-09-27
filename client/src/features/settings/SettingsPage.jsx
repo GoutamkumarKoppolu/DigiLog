@@ -39,7 +39,7 @@ function OptionGroup({ title, kind, options, placeholder, withKind, onAdd, onDel
           </div>
         ))}
         {!options.length && <p className="muted list-empty">Nothing here yet.</p>}
-        <form className="option-add" onSubmit={handleAdd}>
+        <form autoComplete="off" className="option-add" onSubmit={handleAdd}>
           <input
             className="input"
             value={name}

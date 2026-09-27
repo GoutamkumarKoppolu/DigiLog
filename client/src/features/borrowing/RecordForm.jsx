@@ -19,7 +19,7 @@ export default function RecordForm({ id, record, meta, onSubmit }) {
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="amount-field">
         <span className="field-label">Amount</span>
         <span className="amount-input">

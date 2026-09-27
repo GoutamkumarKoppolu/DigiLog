@@ -11,7 +11,7 @@ export default function NameForm({ id, label, initialName = "", placeholder, onS
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="field">
         <span className="field-label">{label}</span>
         <input

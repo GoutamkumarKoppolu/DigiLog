@@ -50,7 +50,8 @@ client/src/
     ui/                    Design-system primitives: BottomSheet, PageHeader (collapsing large title),
                            SegmentedControl, ChipGroup, Switch, StatCard, ProgressRing, DonutChart,
                            Money, ListRow, EmptyState, ErrorBanner, InfoButton (ⓘ → help sheet),
-                           FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob)
+                           FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob),
+                           TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions")
     MonthPicker.jsx        Years × months chip picker ("YYYY-MM"[] contract)
     PeriodSheet.jsx        MonthPicker in a bottom sheet
   features/
@@ -74,7 +75,8 @@ client/src/
     backup/                Backup & restore: backupFormat.js (format version, per-table specs, migrations, validation),
                            api.js (export all tables / restore in one transaction; Blobs ⇄ { $blob: base64, type })
   platform/files.js        Getting files out of the app: download / share sheet / open in the phone's viewer
-                           (FileViewerPlugin.java), with chunked writes on Android so large files don't exhaust memory
+                           (FileViewerPlugin.java) / save to Documents/Expense Tracker (saveTextToDevice), with chunked
+                           writes on Android so large files don't exhaust memory
   content/help.js          In-app explanations shown by InfoButton (one entry per topic)
   theme/
     palettes.css           Accent palettes (light + dark variants) and the Black background
@@ -153,6 +155,7 @@ Conventions in the data layer:
 - **Top third is for viewing, bottom is for doing.** Pages start with a tall `PageHeader` (large title that collapses into a sticky app bar on scroll) or the Home hero. Interactive controls sit lower: bottom nav, the centre + button, full-width primary buttons, and bottom sheets with their actions in the sheet footer.
 - **Forms and pickers open in a `BottomSheet`**, never inline at the top of a page. Submit buttons live in the sheet footer (`<button form={FORM_ID}>`).
 - **Tap targets ≥ 44px**, and choices are chips or segmented controls rather than small dropdowns where the list is short.
+- **No browser suggestions.** Android shows `<datalist>` options and autofill history as chips in the keyboard's suggestion strip (a real bug: old tags appeared while typing a name). So: never use `<datalist>` or `list=`; every `<form>` gets `autoComplete="off"`, and so does any input outside a form (search boxes). For tag suggestions use `components/ui/TagSuggestions.jsx` (in-app chips). `MainActivity` also opts the WebView out of Android autofill. `src/uiRules.test.js` fails the tests if any of this is broken.
 - **Cards and rows, not wide tables.** Only the utilization table remains, inside `.table-scroll`. Test at 360, 390 and 412px widths: there must be no horizontal page scroll.
 - **Colors only from tokens**, never hard-coded. Neutrals/semantic colors live in `index.css` (light on `:root`, dark on `:root[data-theme="dark"]`). Anything brand-coloured uses the accent tokens (`--accent`, `--accent-soft`, `--on-accent`, `--hero-from/-to`) from `theme/palettes.css`, so it follows the user's chosen accent. Charts use `--cat-1..8` in fixed order.
 - **Theme is per device display state** (localStorage via `theme/themeStore.js`), not ledger data, so it doesn't go in IndexedDB. Dark mode is driven by `data-theme` set in JS, not by a `prefers-color-scheme` media query.

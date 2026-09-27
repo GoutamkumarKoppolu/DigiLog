@@ -34,7 +34,7 @@ export default function AddBillForm({ id, folders, initialFolderId, onSubmit, on
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <div className="field">
         <span className="field-label">Folder</span>
         <div className="chip-group" role="radiogroup" aria-label="Folder">

@@ -41,7 +41,7 @@ function AddCardSheet({ onAdd, onClose, error }) {
       }
     >
       <ErrorBanner message={error} />
-      <form id={ADD_CARD_FORM_ID} className="form" onSubmit={handleSubmit}>
+      <form autoComplete="off" id={ADD_CARD_FORM_ID} className="form" onSubmit={handleSubmit}>
         <label className="field">
           <span className="field-label">Card name</span>
           <input
@@ -88,7 +88,7 @@ function AddSpendSheet({ card, onAdd, onClose, error }) {
       }
     >
       <ErrorBanner message={error} />
-      <form id={ADD_SPEND_FORM_ID} className="form" onSubmit={handleSubmit}>
+      <form autoComplete="off" id={ADD_SPEND_FORM_ID} className="form" onSubmit={handleSubmit}>
         <label className="amount-field">
           <span className="field-label">Amount</span>
           <span className="amount-input">

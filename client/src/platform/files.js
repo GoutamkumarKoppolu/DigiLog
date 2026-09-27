@@ -17,20 +17,39 @@ const FileViewer = registerPlugin("FileViewer");
 const TEXT_CHUNK = 4 * 1024 * 1024; // characters
 const BYTE_CHUNK = 3 * 1024 * 1024; // bytes; a multiple of 3 so each base64 chunk decodes on its own
 
-const isNative = () => Capacitor.isNativePlatform();
+export const isNative = () => Capacitor.isNativePlatform();
 const isCancel = (e) => /cancel/i.test(e?.message || "");
 
 // Keeps a name safe for the cache folder: letters, digits, dot, dash, underscore.
 export const safeFileName = (name) => String(name || "file").replace(/[^\w.-]+/g, "_").slice(0, 120) || "file";
 
-async function writeChunks(path, chunks, encoding) {
+async function writeChunks(path, chunks, encoding, directory = Directory.Cache) {
   let uri = null;
   for (let i = 0; i < chunks.length; i++) {
-    const options = { path, data: chunks[i], directory: Directory.Cache, ...(encoding && { encoding }) };
-    if (i === 0) ({ uri } = await Filesystem.writeFile(options));
+    const options = { path, data: chunks[i], directory, ...(encoding && { encoding }) };
+    if (i === 0) ({ uri } = await Filesystem.writeFile({ ...options, recursive: true }));
     else await Filesystem.appendFile(options);
   }
   return uri;
+}
+
+// Folder inside the phone's Documents where backups are saved.
+export const DEVICE_FOLDER = "Expense Tracker";
+
+// Saves a text file into Documents/Expense Tracker on the phone, where the
+// Files app (and the Import button's picker) can find it. Android 10 and
+// older ask for storage permission first; newer versions don't need it for
+// files the app creates. Resolves to the path to show the user.
+export async function saveTextToDevice(fileName, contents) {
+  if (!isNative()) {
+    download(fileName, new Blob([contents], { type: "application/json" }));
+    return `your Downloads folder as ${fileName}`;
+  }
+  let { publicStorage } = await Filesystem.checkPermissions();
+  if (publicStorage !== "granted") ({ publicStorage } = await Filesystem.requestPermissions());
+  if (publicStorage !== "granted") throw new Error("Storage permission is needed to save to your phone. Use Share instead.");
+  await writeChunks(`${DEVICE_FOLDER}/${safeFileName(fileName)}`, textChunks(contents), Encoding.UTF8, Directory.Documents);
+  return `Documents › ${DEVICE_FOLDER} › ${safeFileName(fileName)}`;
 }
 
 function textChunks(text) {

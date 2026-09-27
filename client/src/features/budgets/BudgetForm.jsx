@@ -12,7 +12,7 @@ export default function BudgetForm({ id, budget, nameLabel, namePlaceholder, onS
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="field">
         <span className="field-label">{nameLabel}</span>
         <input

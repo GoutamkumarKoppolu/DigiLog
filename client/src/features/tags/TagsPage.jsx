@@ -46,6 +46,7 @@ export default function TagsPage({ navigate, onOpenTransaction }) {
           <Search size={18} aria-hidden="true" />
           <input
             type="search"
+            autoComplete="off"
             className="input"
             placeholder="Search tags"
             aria-label="Search tags"

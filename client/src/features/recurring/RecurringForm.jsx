@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SegmentedControl from "../../components/ui/SegmentedControl";
 import Switch from "../../components/ui/Switch";
+import TagSuggestions from "../../components/ui/TagSuggestions";
 
 const KIND_OPTIONS = [
   { value: "expense", label: "Expense" },
@@ -39,7 +40,7 @@ export default function RecurringForm({ id, item, prog, tags, paymentMethods, pa
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="field">
         <span className="field-label">Name</span>
         <input
@@ -80,18 +81,12 @@ export default function RecurringForm({ id, item, prog, tags, paymentMethods, pa
           <input
             className="input"
             name="tag"
-            list="recurring-tag-options"
             value={form.tag}
             onChange={handleChange}
             placeholder="e.g. Home loan"
             enterKeyHint="next"
             required
           />
-          <datalist id="recurring-tag-options">
-            {tags.map((t) => (
-              <option key={t} value={t} />
-            ))}
-          </datalist>
         </label>
         <label className="field">
           <span className="field-label">Day of month</span>
@@ -110,6 +105,7 @@ export default function RecurringForm({ id, item, prog, tags, paymentMethods, pa
           />
         </label>
       </div>
+      <TagSuggestions value={form.tag} tags={tags} onPick={(t) => set("tag", t)} />
       {day >= 1 && day <= 31 && (
         <span className="field-hint recurring-day-hint">
           On the {ordinal(day)} of every month{day > 28 ? " (or the month's last day)" : ""}, once that month's Salary is added.

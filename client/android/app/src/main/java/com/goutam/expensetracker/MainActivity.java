@@ -3,6 +3,7 @@ package com.goutam.expensetracker;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.webkit.WebView;
 import androidx.activity.OnBackPressedCallback;
@@ -24,6 +25,19 @@ public class MainActivity extends BridgeActivity {
         if (webView == null) return;
         keepWebViewAboveKeyboard(webView);
         routeBackButtonToApp(webView);
+        turnOffAutofill(webView);
+    }
+
+    /**
+     * Android's autofill offered past entries (e.g. old tags) as chips in the
+     * keyboard's suggestion strip while typing names. Nothing in this app should
+     * be autofilled, so the WebView and everything in it opt out. The web side
+     * also sets autoComplete="off" on every form and search box.
+     */
+    private void turnOffAutofill(WebView webView) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        }
     }
 
     /**

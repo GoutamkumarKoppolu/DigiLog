@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Switch from "../../components/ui/Switch";
 import InfoButton from "../../components/ui/InfoButton";
+import TagSuggestions from "../../components/ui/TagSuggestions";
 import { deductsFromBalance } from "../../domain/transactions";
 import { today } from "../../utils/format";
 
@@ -50,7 +51,7 @@ export default function TransactionForm({ id, transaction, transactionTypes, pay
   }
 
   return (
-    <form id={id} className="form" onSubmit={handleSubmit}>
+    <form autoComplete="off" id={id} className="form" onSubmit={handleSubmit}>
       <label className="amount-field">
         <span className="field-label">Amount</span>
         <span className="amount-input">
@@ -107,28 +108,14 @@ export default function TransactionForm({ id, transaction, transactionTypes, pay
           id="tx-tag"
           type="text"
           name="tag"
-          list="tag-options"
           className="input"
           placeholder="e.g. Shopping, Salary, Food"
           value={form.tag}
           onChange={handleChange}
           required
         />
-        <datalist id="tag-options">
-          {existingTags.map((t) => (
-            <option key={t} value={t} />
-          ))}
-        </datalist>
       </label>
-      {existingTags.length > 0 && (
-        <div className="chip-group chip-group-scroll" aria-label="Recent tags">
-          {existingTags.slice(0, QUICK_TAG_COUNT).map((t) => (
-            <button type="button" key={t} className={`chip chip-sm ${form.tag === t ? "is-active" : ""}`} onClick={() => set("tag", t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
+      <TagSuggestions value={form.tag} tags={existingTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
 
       <div className="field-grid">
         <label className="field">
