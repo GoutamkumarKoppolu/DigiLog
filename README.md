@@ -1,4 +1,4 @@
-# Expense Tracker
+# Track My Bills
 
 A private, offline-first money tracker for Android and the web, designed to be used with one hand.
 Track what you earn, spend and save. EMIs, rent and SIPs are added for you each month once your salary is in. It knows *where* your savings came from, checks your card
@@ -104,7 +104,7 @@ Most expense apps give you a single running total and nothing more. Real money i
 - **Info buttons (ⓘ)** explain the less obvious features (balance deduction, savings, recurring payments, subscriptions, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, backups) right where you use them.
 
 ### Your data
-- **Backup & restore:** export everything (data, bill files and theme) to a JSON file. On Android, **Save to phone** writes it to *Documents › Expense Tracker* (it stays there even if the app is uninstalled) and **Share** sends it to Drive, WhatsApp or email; on the web it downloads. Each file is named with the date and time, so older backups aren't overwritten. Large backups are written in pieces so they don't run the phone out of memory.
+- **Backup & restore:** export everything (data, bill files and theme) to a JSON file. On Android, **Save to phone** writes it to *Documents › Track My Bills* (it stays there even if the app is uninstalled) and **Share** sends it to Drive, WhatsApp or email; on the web it downloads. Each file is named with the date and time, so older backups aren't overwritten. Large backups are written in pieces so they don't run the phone out of memory.
 - **Safe import:** the whole file is checked before anything changes; you see a summary, your data is replaced in a single step (all or nothing), and backups from older app versions are upgraded automatically.
 - **Offline and private:** no network calls during normal use and no account.
 
