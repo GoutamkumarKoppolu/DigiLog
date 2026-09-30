@@ -19,13 +19,22 @@ export const HELP = {
     example: "Pot \"Salary savings\": ₹5,000. Pot \"Gift money\": ₹2,000 you were given. Spend ₹1,500 from \"Salary savings\" → ₹3,500 left there, the ₹2,000 in \"Gift money\" untouched.",
   },
   creditCards: {
-    title: "Why credit cards have their own page",
+    title: "How credit cards work here",
     body: [
-      "Card statements often don't make it clear what each amount was spent on.",
-      "Log card spends here as you make them, with a short description. When the bill arrives, compare the month's logged total with the statement: any difference is a spend you forgot to log or a charge you should check.",
-      "These entries are kept separate from your balance, so nothing is counted twice.",
+      "Card statements often don't make it clear what each amount was spent on, so log each card spend here as you make it, with a short description. These entries don't touch your balance.",
+      "When you pay the bill, add it on Home as an expense and turn on \"Paying a credit card bill\", then pick the card. That is the money leaving your balance, tagged \"<card> bill\".",
+      "Each card then shows, month by month, what you logged next to the bill you paid for it. Bills are paid around salary time, so a bill paid on or after the 25th counts for that month, and one paid before the 25th counts for the month before.",
+      "Bills paid at the bottom shows the bills for all cards together.",
     ],
-    example: "Logged this month: ₹12,400. Statement: ₹13,150. The ₹750 difference is worth a look.",
+    example: "Logged in September: ₹12,400. Bill paid on 1 October: ₹13,150 → September shows ₹750 paid but not logged, worth a look.",
+  },
+  cardBills: {
+    title: "Paying a credit card bill",
+    body: [
+      "Turn this on when an expense is a credit card bill, and pick the card. It's tagged \"<card> bill\" so the Credit cards page can compare it with the spends you logged for that card.",
+      "Add your cards on More › Credit cards first; each one shows up here.",
+    ],
+    example: "Paid ₹4,000 for the HDFC Regalia bill → expense tagged \"HDFC Regalia bill\", shown under that card for last month.",
   },
   backup: {
     title: "Why back up",

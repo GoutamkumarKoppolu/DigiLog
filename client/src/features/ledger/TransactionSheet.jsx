@@ -11,8 +11,8 @@ const FORM_ID = "transaction-form";
 // Add (transaction = null) or edit/delete a ledger transaction. When adding,
 // `entries` from other features show as extra Type chips (e.g. Repay); each
 // renders its own form: { id, label, render({ formId, amount, kindChips,
-// onDone, onError }) }.
-export default function TransactionSheet({ transaction, entries = [], onClose }) {
+// onDone, onError }) }. `tagGroups` go to TransactionForm (e.g. card bills).
+export default function TransactionSheet({ transaction, entries = [], tagGroups = [], onClose }) {
   const { options, tags, error, setError, saveTransaction, removeTransaction, refresh } = useLedger();
   // Which chip is picked; the amount is carried over when switching.
   const [mode, setMode] = useState({ extra: null, type: "", amount: "" });
@@ -92,6 +92,7 @@ export default function TransactionSheet({ transaction, entries = [], onClose })
           onSubmit={handleSubmit}
           seed={mode}
           extras={extras}
+          tagGroups={tagGroups}
           onPickExtra={(extra, amount) => switchTo({ extra, type: "", amount })}
         />
       )}

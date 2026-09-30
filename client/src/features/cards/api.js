@@ -1,7 +1,10 @@
-// Credit card data access. Cards and their transactions are kept fully
-// separate from the main ledger so nothing is double-counted.
+// Credit card data access. Logged card spends are kept separate from the
+// main ledger so nothing is double-counted; the bill is paid on Home as an
+// expense tagged "<card name> bill" (see domain.js), which is only read here.
 import { db } from "../../db";
+import { fetchTransactions } from "../../api";
 import { requireNonEmpty, requirePositiveAmount, requireValidLast4 } from "../../db/validators";
+import { billsByCard } from "./domain";
 
 const nowIso = () => new Date().toISOString();
 
@@ -17,38 +20,29 @@ export function fetchCreditCards() {
   return db.credit_cards.orderBy("created_at").toArray();
 }
 
-// Only card+month combinations with at least one transaction are included,
-// matching the old INNER JOIN (a card with no transactions in a given month
-// simply doesn't appear, rather than showing a zero).
-export async function fetchCardUtilization() {
-  const [txs, cards] = await Promise.all([db.credit_card_transactions.toArray(), db.credit_cards.toArray()]);
-  const cardNameById = Object.fromEntries(cards.map((c) => [c.id, c.name]));
-
-  const totals = new Map();
-  txs.forEach((t) => {
-    const month = t.date.slice(0, 7);
-    const key = `${t.card_id}:${month}`;
-    totals.set(key, (totals.get(key) || 0) + Number(t.amount));
-  });
-
-  const rows = [...totals.entries()].map(([key, total]) => {
-    const [cardIdStr, month] = key.split(":");
-    const card_id = Number(cardIdStr);
-    return { card_id, card_name: cardNameById[card_id], month, total };
-  });
-  rows.sort((a, b) => a.month.localeCompare(b.month));
-  return rows;
+// Everything the page compares: every logged spend, and every bill paid from
+// Home (expenses tagged with a card's bill tag), by card.
+export async function fetchCardData() {
+  const [cards, spends, expenses] = await Promise.all([
+    fetchCreditCards(),
+    db.credit_card_transactions.toArray(),
+    fetchTransactions({ kind: "expense" }),
+  ]);
+  return { cards, spends, bills: billsByCard(cards, expenses) };
 }
 
 export async function createCreditCard(data) {
   const name = requireNonEmpty(data.name, "name");
   requireValidLast4(data.last4);
+  // Each card's name is its bill tag, so two cards can't share one.
+  const cards = await db.credit_cards.toArray();
+  if (cards.some((c) => c.name.trim().toLowerCase() === name.toLowerCase())) throw new Error(`You already have a card called "${name}"`);
   const id = await db.credit_cards.add({ name, last4: data.last4 || null, created_at: nowIso() });
   return db.credit_cards.get(id);
 }
 
-// Cascade-deletes the card's transactions too, since IndexedDB has no
-// FK/ON DELETE CASCADE support — replaces that behavior from schema.sql.
+// Cascade-deletes the card's logged spends too, since IndexedDB has no
+// FK/ON DELETE CASCADE support. Bills paid for it stay: they're expenses.
 export async function deleteCreditCard(id) {
   const cardId = Number(id);
   const existing = await db.credit_cards.get(cardId);

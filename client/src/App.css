@@ -295,6 +295,66 @@
   font-weight: 600;
 }
 
+/* ---------- Chart tap labels (ChartTip) ---------- */
+
+/* Sits over the top of the tapped column; start/end keep it inside the
+   chart at the edges. Text stays in text colours, the swatch carries identity. */
+.chart-tip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chart-tip-start {
+  left: 0;
+}
+
+.chart-tip-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chart-tip-end {
+  right: 0;
+}
+
+.chart-tip-title {
+  font-weight: 650;
+}
+
+.chart-tip-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-tip-label {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.chart-tip-swatch {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
 /* ---------- Tones, pills, badges ---------- */
 
 .tone-positive {
@@ -320,6 +380,11 @@
 .tone-warning {
   background: var(--warning-soft);
   color: var(--warning);
+}
+
+.tone-muted {
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
 .text-positive {
@@ -979,9 +1044,23 @@ button.tx-row:active {
   height: auto;
 }
 
+.donut-segment {
+  transition: opacity 0.15s ease;
+}
+
+.donut-segment[role="button"] {
+  cursor: pointer;
+  outline: none;
+}
+
+.donut-segment.is-faded {
+  opacity: 0.25;
+}
+
 .donut-center {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -993,6 +1072,16 @@ button.tx-row:active {
 .donut-caption {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* A tapped slice's tag, kept inside the hole. */
+.donut-caption-tag {
+  max-width: 140px;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .donut-amount {
@@ -1258,32 +1347,45 @@ button.tx-row:active {
   border-radius: 3px;
 }
 
+/* Six equal month columns that always fit; bars narrow as cards are added. */
 .cc-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
   padding-top: 8px;
-  overflow-x: auto;
 }
 
 .cc-chart-month {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
   gap: 8px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.cc-chart-month.is-selected {
+  background: var(--surface-2);
 }
 
 .cc-chart-bars {
   display: flex;
   align-items: flex-end;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
   height: 140px;
 }
 
 .cc-chart-bar {
-  width: 14px;
+  flex: 0 1 14px;
+  min-width: 3px;
   min-height: 2px;
   border-radius: 4px 4px 0 0;
   transition: height 0.2s ease;
@@ -1292,6 +1394,95 @@ button.tx-row:active {
 .cc-chart-month-label {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+/* Logged vs paid under each card: same card colour, told apart by fill
+   (outlined = logged, filled = paid) so it reads without colour vision. */
+.cc-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  --bar: var(--card-color);
+}
+
+.cc-compare-legend {
+  display: flex;
+  gap: 16px;
+}
+
+.cc-swatch-logged {
+  border: 2px solid var(--bar);
+}
+
+.cc-swatch-paid {
+  background: var(--bar);
+}
+
+.cc-compare-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cc-compare-month {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.cc-compare-month.is-selected {
+  background: var(--surface-2);
+}
+
+.cc-compare-month.is-selected .cc-chart-month-label {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.cc-compare-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 88px;
+}
+
+.cc-bar {
+  width: 12px;
+  border-radius: 4px 4px 0 0;
+}
+
+.cc-bar-logged {
+  box-sizing: border-box;
+  border: 2px solid var(--bar);
+  border-bottom: 0;
+}
+
+.cc-bar-paid {
+  background: var(--bar);
+}
+
+.cc-compare-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cc-compare-figures {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
 }
 
 .table-scroll {

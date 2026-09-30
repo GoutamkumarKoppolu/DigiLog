@@ -52,7 +52,8 @@ client/src/
                            SegmentedControl, ChipGroup, Switch, StatCard, ProgressRing, DonutChart,
                            Money, ListRow, EmptyState, ErrorBanner, InfoButton (ⓘ → help sheet),
                            FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob),
-                           TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions")
+                           TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions"),
+                           ChartTip (tap a chart column → what each mark is and its value)
     MonthPicker.jsx        Years × months chip picker ("YYYY-MM"[] contract)
     PeriodSheet.jsx        MonthPicker in a bottom sheet
   features/
@@ -63,7 +64,9 @@ client/src/
     recurring/             Recurring payments (EMIs, rent, SIPs) + RecurringEngine (rendered once in App): when the month's
                            earning tagged "Salary" exists and a payment's day has come, adds it as a normal transaction
                            via the core api, dated on its day; runs on open, on ledger changes and on returning to the app
-    cards/                 Credit cards page + utilization chart (own api.js; separate from the ledger)
+    cards/                 Credit cards: logged spends (own store, not in the balance) vs bills paid on Home as expenses
+                           tagged "<card> bill" (domain.js: billTag, billMonth, compareMonths); useCardBillTags adds the
+                           "Paying a credit card bill" switch to the expense form
     settings/              Manage options page + More page
     appearance/            Appearance page: background + accent pickers with live preview
     tags/                  Tags page: all transactions by kind → tag → month, all time by default (pure rules in domain.js)
@@ -107,7 +110,7 @@ client/src/
 | `payment_methods` | `id`, `name` (unique) |
 | `payment_sources` | `id`, `name` (unique) |
 | `transactions` | `id`, `type` (type *name*), `amount`, `tag`, `payment_method`, `payment_source`, `date`, `note`, `deduct_from_balance` (savings only; `null` otherwise, missing = `true`), `created_at` |
-| `credit_cards` | `id`, `name`, `last4`, `created_at` |
+| `credit_cards` | `id`, `name` (unique, case-insensitive: it's the bill tag), `last4`, `created_at` |
 | `credit_card_transactions` | `id`, `card_id`, `amount`, `description`, `date`, `created_at` |
 | `savings_withdrawals` (v2) | `id`, `tag` (savings pot), `amount`, `date`, `note`, `created_at` |
 | `budgets` (v3) | `id`, `parent_id` (`null` = event, else the event it belongs to; one level only), `name`, `amount`, `done` (events), `created_at` |
@@ -130,7 +133,7 @@ Conventions in the data layer:
   - Savings with `deduct_from_balance: false` (e.g. money given to you) never reduce the balance.
   - Using savings (a withdrawal) reduces savings only, never the balance. Overall Savings = all savings − withdrawals.
   - A pot can never go below zero: withdrawals are capped at the pot's remaining amount, and editing/deleting a Saving transaction that would push its pot negative is blocked.
-- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes, and `registerMovementSource(fn)` so a feature can move money in/out of the balance or pots, without the core importing the feature. The + sheet takes extra Type chips as `entries` (`{ id, label, render }`), passed in by App. Savings exports `fetchPots` / `checkPots` so a feature moving money out of a pot can't take it below zero. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
+- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes, and `registerMovementSource(fn)` so a feature can move money in/out of the balance or pots, without the core importing the feature. The + sheet takes extra Type chips as `entries` (`{ id, label, render }`) and `tagGroups` (a switch that swaps the Tag field for fixed tags for one kind, e.g. card bills), both passed in by App. Savings exports `fetchPots` / `checkPots` so a feature moving money out of a pot can't take it below zero. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
 - There are no foreign keys in IndexedDB, so cascades are done manually inside a Dexie transaction (see `deleteCreditCard` in `features/cards/api.js`).
 - Files are stored as `Blob`s. Never `await` non-Dexie work (reading a file, making a preview, base64) inside a Dexie transaction: IndexedDB closes the transaction. Prepare it first, then write (see `createBill` in `features/bills/api.js`, `exportBackup`/`restoreBackup` in `features/backup/api.js`).
 - Option CRUD is generic over the `OPTION_KINDS` / `TABLE_BY_KIND` maps in `api.js`.
@@ -153,7 +156,7 @@ Conventions in the data layer:
 | Subscriptions (More → Subscriptions): name, amount, Monthly (day) or Yearly (date), typed payment method + category with suggestion chips, optional free trial (its end is the first charge; regular dates less than half a cycle after it are skipped); totals per month/year (yearly ÷ 12, trials excluded until they end), renewing in 7 days, by category; phone reminders at 9 AM (off / on the day / 1 / 3 days before) + the day before a trial ends; Cancel / Restart / Delete; never touches the balance | `features/subscriptions/` |
 | Backup & restore (More → Backup & restore): export everything (data, bill files + theme) to a JSON file (download on web; Save to phone → Documents/Expense Tracker, or Share, on Android); import validates the whole file, upgrades older backups, shows a summary, then replaces all data atomically | `features/backup/` |
 | Info buttons (ⓘ) explaining balance deduction, savings, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, recurring payments, subscriptions | `components/ui/InfoButton.jsx`, `content/help.js` |
-| Credit cards: card visuals, log spend / delete per card, period picker, 6-month utilization chart (palette `--cat-1..8`) | `features/cards/` |
+| Credit cards: card visuals, log spend / delete per card, period picker; each card shows logged spends vs the bill paid for them over 6 months (outlined vs filled bars in the card's colour; tap a month for Matches / paid but not logged / not paid yet); a bill paid on or after the 25th counts for that month, before it for the previous month (`BILL_CUTOFF_DAY`); "Bills paid" chart + table at the bottom uses only the paid bills (palette `--cat-1..8`). Bills are expenses added with "Paying a credit card bill" on (tag "<card> bill"); deleting a card keeps them | `features/cards/`, `TransactionForm` `tagGroups` |
 | Manage options: transaction types (with kind), payment methods, payment sources | `features/settings/SettingsPage.jsx` |
 | Themes: background (System / Light / Dark / Black AMOLED) × accent (Purple, Blue, Green, Teal, Orange, Pink), saved per device, applied instantly | `theme/`, `features/appearance/`, More → Appearance |
 | Safe-area insets for the Android status/nav bars | `App.css` |
@@ -166,6 +169,7 @@ Conventions in the data layer:
 - **Tap targets ≥ 44px**, and choices are chips or segmented controls rather than small dropdowns where the list is short.
 - **No browser suggestions.** Android shows `<datalist>` options and autofill history as chips in the keyboard's suggestion strip (a real bug: old tags appeared while typing a name). So: never use `<datalist>` or `list=`; every `<form>` gets `autoComplete="off"`, and so does any input outside a form (search boxes). For tag suggestions use `components/ui/TagSuggestions.jsx` (in-app chips). `MainActivity` also opts the WebView out of Android autofill. `src/uiRules.test.js` fails the tests if any of this is broken.
 - **Cards and rows, not wide tables.** Only the utilization table remains, inside `.table-scroll`. Test at 360, 390 and 412px widths: there must be no horizontal page scroll.
+- **Charts are tappable.** On a phone there's no hover, so tapping a bar column shows a `ChartTip` (label + value per mark, tap again to hide) and tapping a donut slice shows it in the hole (`DonutChart` `selected` / `onSelect`). New charts should do the same.
 - **Colors only from tokens**, never hard-coded. Neutrals/semantic colors live in `index.css` (light on `:root`, dark on `:root[data-theme="dark"]`). Anything brand-coloured uses the accent tokens (`--accent`, `--accent-soft`, `--on-accent`, `--hero-from/-to`) from `theme/palettes.css`, so it follows the user's chosen accent. Charts use `--cat-1..8` in fixed order.
 - **Theme is per device display state** (localStorage via `theme/themeStore.js`), not ledger data, so it doesn't go in IndexedDB. Dark mode is driven by `data-theme` set in JS, not by a `prefers-color-scheme` media query.
 - **Adding a palette:** add a light block and a dark block to `theme/palettes.css`, and an entry to `ACCENTS` in `theme/palettes.js`. Keep `--on-accent` on `--accent` and `--accent` on `--accent-soft` at ≥ 4.5:1 contrast.
@@ -187,7 +191,7 @@ Conventions in the data layer:
 - Filtering loads whole tables and filters in memory. That's fine at personal scale, but use Dexie indexes if data grows.
 - Schema changes need a **new `db.version(n)`**, not an edit to an existing version. Editing one breaks existing installs, including users' phones.
 - Savings pots are keyed by tag name, and withdrawals store the tag string, so renames rely on the savings guard.
-- Unit tests cover only pure rules (ledger movements, savings pots, budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
+- Unit tests cover only pure rules (ledger movements, savings pots, credit card bills, budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
 
 ## Rules for building new features
 
