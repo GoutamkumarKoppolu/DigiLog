@@ -46,3 +46,28 @@ export function matchesFilters(t, { months = [], tags = [], kind = "", deduction
   }
   return true;
 }
+
+// ---------- movements ----------
+// Money moving in or out of the balance or a savings pot that isn't income,
+// an expense or a saving, e.g. repaying someone you borrowed from. Features
+// register where they come from (see registerMovementSource in api.js). Row:
+// { key, date, created_at, amount, flow: "in" | "out", account: "balance" |
+//   "savings", pot (savings only), title, note, route }
+
+export const movementSign = (m) => (m.flow === "in" ? 1 : -1);
+
+// How much movements add to (or take from) the balance and overall savings.
+export function movementTotals(movements) {
+  const totals = { balance: 0, savings: 0 };
+  movements.forEach((m) => {
+    totals[m.account] += movementSign(m) * Number(m.amount);
+  });
+  return totals;
+}
+
+// Movements aren't income, expenses or savings, so they only show on Home
+// when no type or tag filter is picked.
+export function matchesMovementFilters(m, { months = [], tags = [], kind = "" } = {}) {
+  if (kind || tags.length) return false;
+  return !months.length || months.includes(m.date.slice(0, 7));
+}

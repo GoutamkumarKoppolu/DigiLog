@@ -17,7 +17,7 @@ import TagsPage from "./features/tags/TagsPage";
 import BackupPage from "./features/backup/BackupPage";
 import { BudgetsPage } from "./features/budgets";
 import { BillsPage } from "./features/bills";
-import { BorrowingPage } from "./features/borrowing";
+import { BorrowingPage, useBorrowEntries } from "./features/borrowing";
 import { RecurringEngine, RecurringPage } from "./features/recurring";
 import { SubscriptionReminders, SubscriptionsPage } from "./features/subscriptions";
 
@@ -50,6 +50,12 @@ const TABS = [
   { id: "more", label: "More", icon: LayoutGrid },
 ];
 
+// Repay / Received chips in the + sheet. A component of its own because it
+// reads the ledger, which App provides.
+function AddSheet(props) {
+  return <TransactionSheet {...props} entries={useBorrowEntries()} />;
+}
+
 export default function App() {
   const [route, navigate, param] = useHashRoute(ROUTES, "home");
   useBackButton(ROUTES, route, param, navigate);
@@ -72,7 +78,7 @@ export default function App() {
           onNavigate={navigate}
           onAdd={add ? () => setSheet({ transaction: null }) : null}
         />
-        {sheet && <TransactionSheet transaction={sheet.transaction} onClose={() => setSheet(null)} />}
+        {sheet && <AddSheet transaction={sheet.transaction} onClose={() => setSheet(null)} />}
       </div>
     </LedgerProvider>
   );

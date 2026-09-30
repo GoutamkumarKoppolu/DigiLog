@@ -1,6 +1,7 @@
 // Pure rules for money borrowed from people and lent to people. Each record
-// is one borrowing or lending; payments pay it back. Nothing here touches the
-// main balance.
+// is one borrowing or lending; payments pay it back. A record or payment can
+// move money in or out of the balance or a savings pot (`linked_to`), or just
+// be noted (`linked_to` null).
 
 // Sums in paise so float noise never shows up in totals.
 const toPaise = (n) => Math.round(Number(n) * 100);
@@ -13,7 +14,14 @@ export const DIRECTIONS = {
     add: "Add borrowed money",
     payment: "Repaid",
     addPayment: "Add repayment",
+    entry: "Repay",
     personLabel: "Borrowed from",
+    recordTitle: "Borrowed",
+    // Borrowing brings money in; repaying sends it out.
+    recordFlow: "in",
+    paymentFlow: "out",
+    recordLink: "Money went into",
+    paymentLink: "Paid from",
     outstanding: "You still owe",
     empty: "Nothing borrowed yet. Add money you borrowed from someone, then note each repayment.",
   },
@@ -22,13 +30,70 @@ export const DIRECTIONS = {
     add: "Add money lent",
     payment: "Received",
     addPayment: "Add money received",
+    entry: "Received",
     personLabel: "Lent to",
+    recordTitle: "Lent",
+    recordFlow: "out",
+    paymentFlow: "in",
+    recordLink: "Money went from",
+    paymentLink: "Received into",
     outstanding: "Still owed to you",
     empty: "Nothing lent yet. Add money you gave someone, then note each amount they pay back.",
   },
 };
 
 export const isDirection = (d) => Object.keys(DIRECTIONS).includes(d);
+
+// Where the money went: the balance, a savings pot, or nowhere (null = just
+// noted, which is also how records made before linking existed behave).
+export const LINKS = ["balance", "savings"];
+
+// Movement key prefix, so borrowing's movements can be swapped out when
+// checking an edit against the savings pots.
+export const MOVEMENT_KEY = "borrowing-";
+
+// Every linked record and payment as a movement (see domain/transactions.js).
+// A record is money borrowed (in) or lent (out); its payments go the other way.
+export function borrowMovements(records, payments) {
+  const byId = new Map(records.map((r) => [r.id, r]));
+  const move = (row, key, flow, title, recordId) =>
+    row.linked_to
+      ? [
+          {
+            key: `${MOVEMENT_KEY}${key}`,
+            date: row.date,
+            created_at: row.created_at,
+            amount: Number(row.amount),
+            flow,
+            account: row.linked_to,
+            pot: row.linked_to === "savings" ? row.pot : null,
+            title,
+            note: row.note || null,
+            route: `borrowing/${recordId}`,
+          },
+        ]
+      : [];
+
+  return [
+    ...records.flatMap((r) => {
+      const meta = DIRECTIONS[r.direction];
+      return move(r, `record-${r.id}`, meta.recordFlow, `${meta.recordTitle} · ${r.person}`, r.id);
+    }),
+    ...payments.flatMap((p) => {
+      const r = byId.get(p.record_id);
+      if (!r) return [];
+      const meta = DIRECTIONS[r.direction];
+      return move(p, `payment-${p.id}`, meta.paymentFlow, `${meta.entry} · ${r.person}`, r.id);
+    }),
+  ];
+}
+
+// "from balance", "into Trip savings": where a record or payment's money went.
+export function linkLabel(row, flow) {
+  if (!row.linked_to) return "";
+  const where = row.linked_to === "savings" ? `${row.pot} savings` : "balance";
+  return `${flow === "in" ? "into" : "from"} ${where}`;
+}
 
 const newestFirst = (a, b) => b.date.localeCompare(a.date) || String(b.created_at).localeCompare(String(a.created_at));
 

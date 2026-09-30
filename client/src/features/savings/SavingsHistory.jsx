@@ -1,9 +1,31 @@
-import { HandCoins, History, PiggyBank, Trash2 } from "lucide-react";
+import { ArrowLeftRight, HandCoins, History, PiggyBank, Trash2 } from "lucide-react";
 import EmptyState from "../../components/ui/EmptyState";
 import { currency, dateHeading, groupByDate } from "../../utils/format";
 
-// Timeline of money in (Saving transactions from the ledger) and money out
-// (withdrawals). Deposits are edited from Home; withdrawals are deleted here.
+// Money moved in or out by another feature (e.g. "Repay · Anil"); it's
+// changed where it was made, so there's nothing to tap here.
+function MovementEntry({ e }) {
+  const isIn = e.flow === "in";
+  return (
+    <div className="tx-row">
+      <span className={`icon-badge ${isIn ? "tone-savings" : "tone-negative"}`}>
+        <ArrowLeftRight size={18} />
+      </span>
+      <span className="tx-main">
+        <span className="tx-title">{e.title}</span>
+        <span className="tx-sub">{[`${isIn ? "Into" : "From"} ${e.tag}`, e.note].filter(Boolean).join(" · ")}</span>
+      </span>
+      <span className={`tx-amount ${isIn ? "text-savings" : "text-negative"}`}>
+        {isIn ? "+" : "−"}
+        {currency(e.amount)}
+      </span>
+    </div>
+  );
+}
+
+// Timeline of money in (Saving transactions from the ledger), money out
+// (withdrawals) and movements. Deposits are edited from Home; withdrawals are
+// deleted here.
 export default function SavingsHistory({ entries, onDeleteWithdrawal }) {
   if (!entries.length) {
     return <EmptyState icon={History}>No savings history for this selection.</EmptyState>;
@@ -18,6 +40,7 @@ export default function SavingsHistory({ entries, onDeleteWithdrawal }) {
           </div>
           <div className="card card-list">
             {g.rows.map((e) => {
+              if (e.entry === "movement") return <MovementEntry key={e.key} e={e} />;
               const isDeposit = e.entry === "deposit";
               return (
                 <div className="tx-row" key={e.key}>

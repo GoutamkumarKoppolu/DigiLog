@@ -72,9 +72,10 @@ export const HELP = {
       "Keep track of money you borrowed from people (Borrowed) and money you gave people that they'll pay back (Lent).",
       "Add one entry each time: who, how much, when, and why if you like. Tap it to see everything, and add each part as it's paid back. What's left updates straight away, and a payment can't be more than what's left.",
       "When it's fully paid back it's marked Completed automatically. If you decide to let the rest go, tap Mark as completed. Save a phone number to call or WhatsApp them from here.",
-      "This is only a record of who owes what. It doesn't change your current balance, so log the actual money on Home if you want it there too.",
+      "Each entry and payment says where the money went: your Balance, a Savings pot, or Just note it. Balance and Savings change your current balance or that pot, and show on Home. Just note it only keeps the record here, e.g. for money lent before you used the app.",
+      "To pay someone back or note money you got back, you can also tap + and pick Repay or Received. None of this counts as income or expenses.",
     ],
-    example: "Lent Ravi ₹50,000. He pays ₹10,000, then ₹10,000, then ₹30,000 → ₹30,000, ₹20,000, then nothing left, and it moves to Completed.",
+    example: "Balance ₹50,000. Lend Ravi ₹10,000 from Balance → ₹40,000. He pays it all back into Balance → ₹50,000 again, and his entry moves to Completed.",
   },
   recurring: {
     title: "How recurring payments work",

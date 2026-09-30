@@ -17,8 +17,8 @@ const WITHDRAW_FORM_ID = "withdraw-form";
 // Self-contained feature page: owns its state and data loading. Reloads when
 // the ledger changes (e.g. a Saving added via the + button).
 export default function SavingsPage() {
-  const { transactions: ledgerVersion, refresh: refreshLedger } = useLedger();
-  const [data, setData] = useState({ savings: [], withdrawals: [] });
+  const { transactions: ledgerVersion, movements, refresh: refreshLedger } = useLedger();
+  const [data, setData] = useState({ savings: [], withdrawals: [], movements: [] });
   const [selectedTag, setSelectedTag] = useState("");
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [error, setError] = useState("");
@@ -31,11 +31,11 @@ export default function SavingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(load, [load, ledgerVersion]);
+  useEffect(load, [load, ledgerVersion, movements]);
 
-  const pots = computePots(data.savings, data.withdrawals);
+  const pots = computePots(data.savings, data.withdrawals, data.movements);
   const summary = summarizePots(pots);
-  const history = buildHistory(data.savings, data.withdrawals, selectedTag);
+  const history = buildHistory(data.savings, data.withdrawals, data.movements, selectedTag);
   const canWithdraw = pots.some((p) => p.remaining > 0);
 
   // Withdrawals change Overall Savings on Home, so refresh the ledger too.

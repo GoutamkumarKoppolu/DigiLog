@@ -2,8 +2,10 @@
 // withdrawals. Withdrawals only reduce savings, never the current balance.
 import { deductsFromBalance } from "../../domain/transactions";
 
-// savings: ledger rows of kind "saving"; withdrawals: savings_withdrawals rows.
-export function computePots(savings, withdrawals) {
+// savings: ledger rows of kind "saving"; withdrawals: savings_withdrawals rows;
+// movements: money moved into or out of a pot by other features (e.g. a
+// repayment paid from savings). Money moved in didn't come from the balance.
+export function computePots(savings, withdrawals, movements = []) {
   const pots = new Map();
   const pot = (tag) => {
     if (!pots.has(tag)) pots.set(tag, { tag, saved: 0, fromBalance: 0, notFromBalance: 0, used: 0 });
@@ -20,6 +22,16 @@ export function computePots(savings, withdrawals) {
   withdrawals.forEach((w) => {
     pot(w.tag).used += Number(w.amount);
   });
+  movements
+    .filter((m) => m.account === "savings")
+    .forEach((m) => {
+      const p = pot(m.pot);
+      const amount = Number(m.amount);
+      if (m.flow === "in") {
+        p.saved += amount;
+        p.notFromBalance += amount;
+      } else p.used += amount;
+    });
 
   return [...pots.values()]
     .map((p) => ({ ...p, remaining: p.saved - p.used }))
@@ -39,9 +51,9 @@ export function summarizePots(pots) {
   );
 }
 
-// Deposits and withdrawals merged into one newest-first timeline, optionally
-// limited to one pot (tag).
-export function buildHistory(savings, withdrawals, tag = "") {
+// Deposits, withdrawals and movements merged into one newest-first timeline,
+// optionally limited to one pot (tag).
+export function buildHistory(savings, withdrawals, movements = [], tag = "") {
   const entries = [
     ...savings.map((t) => ({
       key: `deposit-${t.id}`,
@@ -64,6 +76,19 @@ export function buildHistory(savings, withdrawals, tag = "") {
       note: w.note,
       created_at: w.created_at,
     })),
+    ...movements
+      .filter((m) => m.account === "savings")
+      .map((m) => ({
+        key: `movement-${m.key}`,
+        entry: "movement",
+        title: m.title,
+        flow: m.flow,
+        tag: m.pot,
+        amount: Number(m.amount),
+        date: m.date,
+        note: m.note,
+        created_at: m.created_at,
+      })),
   ];
   return entries
     .filter((e) => !tag || e.tag === tag)

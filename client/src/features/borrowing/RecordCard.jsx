@@ -1,9 +1,10 @@
 import { ChevronDown, CircleCheck, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { currency, shortDate } from "../../utils/format";
 import ContactButtons from "./ContactButtons";
+import { linkLabel } from "./domain";
 
 // One borrowing/lending: who, what's left and progress; expands to the note,
-// phone, every payment and the actions.
+// phone, every payment (with where its money went) and the actions.
 export default function RecordCard(props) {
   const { record, meta, open, onToggle, onAddPayment, onOpenPayment, onDeletePayment, onEdit, onDelete, onToggleCompleted } = props;
   const share = record.amount ? Math.min(1, record.paid / record.amount) : 0;
@@ -11,7 +12,7 @@ export default function RecordCard(props) {
   const initial = record.person.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <div className={`card tag-card record-card ${open ? "is-open" : ""}`}>
+    <div id={`record-card-${record.id}`} className={`card tag-card record-card ${open ? "is-open" : ""}`}>
       <button type="button" className="record-head" aria-expanded={open} aria-controls={panelId} onClick={onToggle}>
         <span className={`record-avatar ${record.completed ? "tone-positive" : "tone-accent"}`} aria-hidden="true">
           {initial}
@@ -42,6 +43,7 @@ export default function RecordCard(props) {
           <div className="record-facts">
             <span className="muted">
               {meta.personLabel} {record.person} on {shortDate(record.date)} {record.date.slice(0, 4)} · {currency(record.amount)}
+              {record.linked_to && ` ${linkLabel(record, meta.recordFlow)}`}
             </span>
             {record.note && <p className="record-note">{record.note}</p>}
           </div>
@@ -56,7 +58,9 @@ export default function RecordCard(props) {
                     <span className="record-payment-date">{shortDate(p.date)}</span>
                     <span className="tx-main">
                       <span className="tx-title">{meta.payment}</span>
-                      {p.note && <span className="tx-sub">{p.note}</span>}
+                      {(p.linked_to || p.note) && (
+                        <span className="tx-sub">{[linkLabel(p, meta.paymentFlow), p.note].filter(Boolean).join(" · ")}</span>
+                      )}
                     </span>
                     <span className="tx-amount text-positive">{currency(p.amount)}</span>
                   </button>

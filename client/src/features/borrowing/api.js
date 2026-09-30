@@ -1,9 +1,11 @@
-// Data access for money borrowed from and lent to people. Kept fully separate
-// from the main ledger: nothing here changes the current balance.
+// Data access for money borrowed from and lent to people. A record or payment
+// can be linked to the balance or a savings pot; it then shows up as a
+// movement (registered in ./index.js), and no pot may go below zero.
 import { db } from "../../db";
 import { requireNonEmpty, requirePositiveAmount } from "../../db/validators";
 import { currency } from "../../utils/format";
-import { cleanPhone, exceeds, isDirection, maxPayment, summarizeRecord } from "./domain";
+import { checkPots } from "../savings";
+import { LINKS, MOVEMENT_KEY, borrowMovements, cleanPhone, exceeds, isDirection, maxPayment, summarizeRecord } from "./domain";
 
 const nowIso = () => new Date().toISOString();
 
@@ -11,6 +13,24 @@ export async function fetchBorrowingData() {
   const [records, payments] = await Promise.all([db.borrow_records.toArray(), db.borrow_payments.toArray()]);
   return { records, payments };
 }
+
+// Movement source for the core ledger (see registerMovementSource).
+export async function fetchBorrowMovements() {
+  const { records, payments } = await fetchBorrowingData();
+  return borrowMovements(records, payments);
+}
+
+// Refuses a change that would leave a savings pot below zero. `edit` turns
+// the current { records, payments } into what they'd be after the change.
+async function checkSavings(edit) {
+  const next = edit(await fetchBorrowingData());
+  await checkPots((movements) => [
+    ...movements.filter((m) => !m.key.startsWith(MOVEMENT_KEY)),
+    ...borrowMovements(next.records, next.payments),
+  ]);
+}
+
+const replaceRow = (rows, row) => rows.map((r) => (r.id === row.id ? row : r));
 
 async function getRecord(id) {
   const record = await db.borrow_records.get(Number(id));
@@ -22,6 +42,13 @@ async function summaryOf(record) {
   return summarizeRecord(record, await db.borrow_payments.where("record_id").equals(record.id).toArray());
 }
 
+// null (or anything empty) = just note it.
+function linkFields(data) {
+  if (!data.linked_to) return { linked_to: null, pot: null };
+  if (!LINKS.includes(data.linked_to)) throw new Error("Pick balance, savings or just note it");
+  return { linked_to: data.linked_to, pot: data.linked_to === "savings" ? requireNonEmpty(data.pot, "pot") : null };
+}
+
 function recordFields(data) {
   requirePositiveAmount(data.amount);
   if (!data.date) throw new Error("date is required");
@@ -31,12 +58,15 @@ function recordFields(data) {
     date: data.date,
     phone: cleanPhone(data.phone) || null,
     note: data.note?.trim() || null,
+    ...linkFields(data),
   };
 }
 
 export async function createRecord(direction, data) {
   if (!isDirection(direction)) throw new Error("Pick borrowed or lent");
-  const id = await db.borrow_records.add({ direction, ...recordFields(data), completed: false, created_at: nowIso() });
+  const record = { direction, ...recordFields(data), completed: false, created_at: nowIso() };
+  await checkSavings(({ records, payments }) => ({ records: [...records, { ...record, id: 0 }], payments }));
+  const id = await db.borrow_records.add(record);
   return db.borrow_records.get(id);
 }
 
@@ -47,6 +77,7 @@ export async function updateRecord(id, data) {
   if (exceeds(paid, fields.amount)) {
     throw new Error(`${currency(paid)} has already been paid back, so the amount can't be less than that`);
   }
+  await checkSavings(({ records, payments }) => ({ records: replaceRow(records, { ...record, ...fields }), payments }));
   await db.borrow_records.update(record.id, fields);
   return db.borrow_records.get(record.id);
 }
@@ -58,8 +89,13 @@ export async function setCompleted(id, completed) {
   return db.borrow_records.get(record.id);
 }
 
+// Also undoes its payments, and whatever they and the record moved.
 export async function deleteRecord(id) {
   const record = await getRecord(id);
+  await checkSavings(({ records, payments }) => ({
+    records: records.filter((r) => r.id !== record.id),
+    payments: payments.filter((p) => p.record_id !== record.id),
+  }));
   await db.transaction("rw", db.borrow_records, db.borrow_payments, async () => {
     await db.borrow_payments.where("record_id").equals(record.id).delete();
     await db.borrow_records.delete(record.id);
@@ -70,7 +106,7 @@ export async function deleteRecord(id) {
 function paymentFields(data) {
   requirePositiveAmount(data.amount);
   if (!data.date) throw new Error("date is required");
-  return { amount: Number(data.amount), date: data.date, note: data.note?.trim() || null };
+  return { amount: Number(data.amount), date: data.date, note: data.note?.trim() || null, ...linkFields(data) };
 }
 
 // A payment can't be more than what's left.
@@ -83,7 +119,9 @@ export async function createPayment(recordId, data) {
   const record = await getRecord(recordId);
   const fields = paymentFields(data);
   assertFits(await summaryOf(record), fields.amount);
-  const id = await db.borrow_payments.add({ record_id: record.id, ...fields, created_at: nowIso() });
+  const payment = { record_id: record.id, ...fields, created_at: nowIso() };
+  await checkSavings(({ records, payments }) => ({ records, payments: [...payments, { ...payment, id: 0 }] }));
+  const id = await db.borrow_payments.add(payment);
   return db.borrow_payments.get(id);
 }
 
@@ -92,6 +130,7 @@ export async function updatePayment(paymentId, data) {
   if (!payment) throw new Error("Payment not found");
   const fields = paymentFields(data);
   assertFits(await summaryOf(await getRecord(payment.record_id)), fields.amount, payment);
+  await checkSavings(({ records, payments }) => ({ records, payments: replaceRow(payments, { ...payment, ...fields }) }));
   await db.borrow_payments.update(payment.id, fields);
   return db.borrow_payments.get(payment.id);
 }
@@ -99,6 +138,7 @@ export async function updatePayment(paymentId, data) {
 export async function deletePayment(paymentId) {
   const id = Number(paymentId);
   if (!(await db.borrow_payments.get(id))) throw new Error("Payment not found");
+  await checkSavings(({ records, payments }) => ({ records, payments: payments.filter((p) => p.id !== id) }));
   await db.borrow_payments.delete(id);
   return null;
 }

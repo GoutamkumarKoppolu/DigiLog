@@ -5,7 +5,7 @@
 // creditCards.js for behavioral parity.
 import { db } from "./db";
 import { isKnownOption, requirePositiveAmount, requireNonEmpty } from "./db/validators";
-import { TRANSACTION_KINDS, computeTotals, matchesFilters, normalizeDeductFlag } from "./domain/transactions";
+import { TRANSACTION_KINDS, computeTotals, matchesFilters, movementTotals, normalizeDeductFlag } from "./domain/transactions";
 
 const nowIso = () => new Date().toISOString();
 
@@ -42,17 +42,38 @@ export async function fetchTags() {
   return [...new Set(rows.map((t) => t.tag))].sort();
 }
 
+// Features add money that moves in or out of the balance or a savings pot
+// without being income, an expense or a saving (e.g. borrowing registers
+// repayments). A source is an async function returning movement rows, see
+// domain/transactions.js.
+const movementSources = [];
+
+export function registerMovementSource(source) {
+  movementSources.push(source);
+}
+
+export async function fetchMovements() {
+  const lists = await Promise.all(movementSources.map((source) => source()));
+  return sortByDateDesc(lists.flat());
+}
+
 // totalSavings is net of money used from savings (features/savings). Using
 // savings never changes the balance, so withdrawals only affect that figure.
+// Movements change the balance or savings but not earnings or expenses.
 export async function fetchOverview() {
-  const [rows, withdrawals] = await Promise.all([allTransactionsWithKind(), db.savings_withdrawals.toArray()]);
+  const [rows, withdrawals, movements] = await Promise.all([
+    allTransactionsWithKind(),
+    db.savings_withdrawals.toArray(),
+    fetchMovements(),
+  ]);
   const totals = computeTotals(rows);
+  const moved = movementTotals(movements);
   const withdrawn = withdrawals.reduce((sum, w) => sum + Number(w.amount), 0);
   return {
     totalEarnings: totals.earnings,
     totalExpenses: totals.expenses,
-    totalSavings: totals.savings - withdrawn,
-    balance: totals.balance,
+    totalSavings: totals.savings - withdrawn + moved.savings,
+    balance: totals.balance + moved.balance,
   };
 }
 

@@ -43,7 +43,8 @@ client/src/
     useBackButton.js       Android Back (called from MainActivity): closes the top sheet, else goes one level up
                            (drops the last `param` segment, then the route's `parent` in ROUTES); false on Home = exit
     BottomNav.jsx          One UI bottom tabs with the raised centre + button
-  api.js                   Core ledger data access: transactions, options, overview, registerTransactionGuard
+  api.js                   Core ledger data access: transactions, options, overview, registerTransactionGuard,
+                           registerMovementSource / fetchMovements
   domain/transactions.js   Pure ledger rules: kinds, balance-deduction flag, computeTotals, matchesFilters
   utils/format.js          Shared helpers: currency, compactCurrency (₹12.35L), dates, periodLabel, groupByDate
   components/
@@ -71,7 +72,9 @@ client/src/
     bills/                 Bills: folders of uploaded photos/PDFs, a bill = one or more pages (#/bills, #/bills/<folder>,
                            #/bills/<folder>/<bill>); files stored as Blobs with a small preview; thumbnail.js makes previews
     borrowing/             "Borrowed & lent" (never call it "loans" in the UI): per-person records with payments,
-                           tabs Borrowed/Lent (DIRECTIONS in domain.js holds each tab's wording); not linked to the balance
+                           tabs Borrowed/Lent (DIRECTIONS in domain.js holds each tab's wording); each record/payment is
+                           linked to Balance, a Savings pot, or "Just note it" (MoneyLinkField) and registers as a movement;
+                           useBorrowEntries adds the Repay / Received chips to the + sheet
     subscriptions/         Subscriptions tracked by hand (monthly day / yearly date, typed payment method, category, trial);
                            totals, renewing soon, by category; reminders.js schedules phone notifications (Local
                            Notifications plugin, ids ≥ 1,000,000) and SubscriptionReminders (rendered once in App) resyncs them
@@ -112,8 +115,8 @@ client/src/
 | `bill_folders` (v4) | `id`, `name` (unique, case-insensitive, checked in `api.js`), `created_at` |
 | `bills` (v4) | `id`, `folder_id`, `name`, `created_at` |
 | `bill_pages` (v4) | `id`, `bill_id`, `position`, `name` (original file name), `type` (MIME), `size`, `data` (Blob, the original file), `thumb` (small JPEG Blob for photos, else `null`), `created_at` |
-| `borrow_records` (v5) | `id`, `direction` (`borrowed` \| `lent`), `person`, `amount`, `date`, `phone` (cleaned, or `null`), `note`, `completed` (marked by hand; fully paid counts as completed without it), `created_at` |
-| `borrow_payments` (v5) | `id`, `record_id`, `amount` (never more than what's left), `date`, `note`, `created_at` |
+| `borrow_records` (v5) | `id`, `direction` (`borrowed` \| `lent`), `person`, `amount`, `date`, `phone` (cleaned, or `null`), `note`, `completed` (marked by hand; fully paid counts as completed without it), `linked_to` (`balance` \| `savings` \| `null` = just noted; missing = `null`), `pot` (savings only), `created_at` |
+| `borrow_payments` (v5) | `id`, `record_id`, `amount` (never more than what's left), `date`, `note`, `linked_to`, `pot` (as on records), `created_at` |
 | `recurring_payments` (v6) | `id`, `name`, `kind` (`expense` \| `saving`), `amount`, `tag`, `day` (1–31; last day in shorter months), `payment_method`, `payment_source`, `deduct_from_balance` (savings), `pending_start` / `duration` (totals, or `null`; the form shows what's *left* = total − payments made), `start_month`, `paused` / `skipped_months` (savings only), `completed` (by hand), `created_at` |
 | `recurring_runs` (v6) | `id`, `recurring_id`, `month`, `transaction_id` (may have been deleted), `created_at`; unique `[recurring_id+month]` so a month is never added twice |
 | `subscriptions` (v7) | `id`, `name`, `amount`, `cycle` (`monthly` \| `yearly`), `day` (1–31), `month` (yearly only), `payment_method` / `category` (free text), `trial_end` (date or `null`), `remind` (`off` \| `0` \| `1` \| `3` days before), `cancelled_at` (date or `null`), `created_at` |
@@ -122,11 +125,12 @@ Conventions in the data layer:
 - Dates are stored as **strings** (`date` = `"YYYY-MM-DD"`, `created_at` = ISO). Month keys are `date.slice(0, 7)` (`"YYYY-MM"`). Never store `Date` objects. To turn a timestamp into a date, use `localDate()` / `today()` from `utils/format.js`, never `iso.slice(0, 10)`: that gives the UTC date, which is yesterday before 05:30 IST.
 - Transactions reference their type by **name**. `api.js` derives `type_kind` at read time, and all totals are computed from `type_kind`, not the type name.
 - **Balance and savings rules** (in `domain/transactions.js` and `features/savings/domain.js`):
-  - Current balance = earnings − expenses − savings that deduct from the balance.
+  - Current balance = earnings − expenses − savings that deduct from the balance ± movements into/out of the balance.
+  - **Movements** are money in or out of the balance or a savings pot that isn't income, an expense or a saving (today: linked borrowed & lent records and payments). Features register a source with `registerMovementSource`; they change the balance, Overall Savings and pots, show on Home (only with no type/tag filter) and in pot history, but never count in Income/Expenses/Saved, the Report or Tags. Rows: `{ key, date, created_at, amount, flow: in|out, account: balance|savings, pot, title, note, route }`.
   - Savings with `deduct_from_balance: false` (e.g. money given to you) never reduce the balance.
   - Using savings (a withdrawal) reduces savings only, never the balance. Overall Savings = all savings − withdrawals.
   - A pot can never go below zero: withdrawals are capped at the pot's remaining amount, and editing/deleting a Saving transaction that would push its pot negative is blocked.
-- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes without the core importing the feature. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
+- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes, and `registerMovementSource(fn)` so a feature can move money in/out of the balance or pots, without the core importing the feature. The + sheet takes extra Type chips as `entries` (`{ id, label, render }`), passed in by App. Savings exports `fetchPots` / `checkPots` so a feature moving money out of a pot can't take it below zero. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
 - There are no foreign keys in IndexedDB, so cascades are done manually inside a Dexie transaction (see `deleteCreditCard` in `features/cards/api.js`).
 - Files are stored as `Blob`s. Never `await` non-Dexie work (reading a file, making a preview, base64) inside a Dexie transaction: IndexedDB closes the transaction. Prepare it first, then write (see `createBill` in `features/bills/api.js`, `exportBackup`/`restoreBackup` in `features/backup/api.js`).
 - Option CRUD is generic over the `OPTION_KINDS` / `TABLE_BY_KIND` maps in `api.js`.
@@ -144,7 +148,7 @@ Conventions in the data layer:
 | Tags page (More → Tags, or "By tag" on Home): all time by default, sections Expenses → Savings → Income, each tag with count, date range, total (savings split from/not from balance); expand for its transactions by month; search; period picker | `features/tags/` |
 | Budgets (More → Budgets): events with a total, optional sub-budgets (one level, "Unallocated" / over-allocated shown), spends from a sub-budget or the whole budget, overspending shown in red, Mark as done / Reopen; never touches the balance | `features/budgets/` |
 | Bills (More → Bills): folders (one level) of bills; add a bill by camera or file picker (photos/PDFs, originals kept, ≤ 50 MB each), each file = its own bill (named after the file, editable before saving), Add pages on a bill for multi-page bills; view photos in-app, Open in the phone's viewer, Share; rename/move bills, add/delete pages, rename/delete folders; search; included in backups | `features/bills/`, `platform/files.js`, `FileViewerPlugin.java` |
-| Borrowed & lent (More → Borrowed & lent): tabs Borrowed / Lent with the outstanding total; one record per borrowing/lending (person, amount, date, optional phone + why), expandable to its payments ("Repaid" / "Received"); payments capped at what's left; Completed automatically when fully paid, or Mark as completed / Reopen; Call and WhatsApp links; never touches the balance | `features/borrowing/` |
+| Borrowed & lent (More → Borrowed & lent): tabs Borrowed / Lent with the outstanding total; one record per borrowing/lending (person, amount, date, optional phone + why), expandable to its payments ("Repaid" / "Received"); payments capped at what's left; Completed automatically when fully paid, or Mark as completed / Reopen; Call and WhatsApp links; each record and payment picks Balance / Savings (pot) / Just note it (new ones default to Balance), and the + sheet offers Repay / Received while someone is still open; Home rows open the record (`#/borrowing/<id>`); not income or expenses | `features/borrowing/` |
 | Recurring (bottom tab): EMIs/rent/SIPs with tag, day, method/source, Expense or Saving (+ deduct switch); added as normal transactions once the month's Salary is in and the day comes (note "Recurring: <name>"), caught up on next open, never twice a month; statuses Due / Waiting for salary / Deducted / Skipped / Paused / Starts / Completed; pending balance and payments left count down and end it; Mark as completed / Reopen; savings can pause or skip a month; per-month history; Edit/Delete keeps past payments | `features/recurring/` |
 | Subscriptions (More → Subscriptions): name, amount, Monthly (day) or Yearly (date), typed payment method + category with suggestion chips, optional free trial (its end is the first charge; regular dates less than half a cycle after it are skipped); totals per month/year (yearly ÷ 12, trials excluded until they end), renewing in 7 days, by category; phone reminders at 9 AM (off / on the day / 1 / 3 days before) + the day before a trial ends; Cancel / Restart / Delete; never touches the balance | `features/subscriptions/` |
 | Backup & restore (More → Backup & restore): export everything (data, bill files + theme) to a JSON file (download on web; Save to phone → Documents/Expense Tracker, or Share, on Android); import validates the whole file, upgrades older backups, shows a summary, then replaces all data atomically | `features/backup/` |
@@ -183,7 +187,7 @@ Conventions in the data layer:
 - Filtering loads whole tables and filters in memory. That's fine at personal scale, but use Dexie indexes if data grows.
 - Schema changes need a **new `db.version(n)`**, not an edit to an existing version. Editing one breaks existing installs, including users' phones.
 - Savings pots are keyed by tag name, and withdrawals store the tag string, so renames rely on the savings guard.
-- Unit tests cover only pure rules (budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
+- Unit tests cover only pure rules (ledger movements, savings pots, budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
 
 ## Rules for building new features
 

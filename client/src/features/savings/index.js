@@ -6,3 +6,4 @@ import { guardSavingsPots } from "./api";
 registerTransactionGuard(guardSavingsPots);
 
 export { default as SavingsPage } from "./SavingsPage";
+export { checkPots, fetchPots } from "./api";
