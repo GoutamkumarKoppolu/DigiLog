@@ -1,33 +1,27 @@
-import { currency } from "../../utils/format";
+import { useState } from "react";
+import ChartTip from "../../components/ui/ChartTip";
+import { currency, periodLabel } from "../../utils/format";
 
 // Fixed categorical order — colorblind-validated (adjacent ΔE ≥ 8 CVD, ≥ 15
 // normal-vision on this app's light/dark surfaces). Never reassign a slot by
 // rank; a card keeps its color as other cards are added/removed.
 const CARD_COLOR_COUNT = 8;
 
-function lastMonthsAscending(count) {
-  const months = [];
-  const now = new Date();
-  for (let i = count - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
-    months.push({ value, label });
-  }
-  return months;
-}
+const monthLabel = (month, year) =>
+  new Date(`${month}-01T00:00:00`).toLocaleString("en-IN", year ? { month: "short", year: "2-digit" } : { month: "short" });
 
-export default function CardUtilizationChart({ cards, utilization }) {
+// Bills paid per card per month (the month the bill pays for), from Home
+// expenses. `paid` maps "cardId:YYYY-MM" to the amount; `months` oldest first.
+// Tap a month to label each card's bill and the total.
+export default function CardUtilizationChart({ cards, months: monthKeys, paid }) {
+  const [tip, setTip] = useState(null);
   if (!cards.length) {
-    return <p className="muted">Add a credit card to see monthly utilization.</p>;
+    return <p className="muted">Add a credit card to see the bills you pay.</p>;
   }
 
-  const months = lastMonthsAscending(6);
-
-  const byCardMonth = {};
-  utilization.forEach((row) => {
-    byCardMonth[`${row.card_id}:${row.month}`] = Number(row.total);
-  });
+  // Columns show "May"; the tap label and table say which year.
+  const months = monthKeys.map((value) => ({ value, label: monthLabel(value, true), short: monthLabel(value, false) }));
+  const byCardMonth = paid;
 
   const max = Math.max(
     1,
@@ -45,29 +39,52 @@ export default function CardUtilizationChart({ cards, utilization }) {
         ))}
       </div>
 
-      <div className="cc-chart" role="img" aria-label="Bar chart of monthly credit card spending by card">
-        {months.map((m) => (
-          <div className="cc-chart-month" key={m.value}>
-            <div className="cc-chart-bars">
-              {cards.map((card, i) => {
-                const amount = byCardMonth[`${card.id}:${m.value}`] || 0;
-                const heightPct = max ? (amount / max) * 100 : 0;
-                return (
-                  <div
+      <div className="cc-chart" role="group" aria-label="Credit card bills paid per month, by card">
+        {months.map((m, mi) => {
+          const amount = (card) => byCardMonth[`${card.id}:${m.value}`] || 0;
+          return (
+            <button
+              type="button"
+              className={`cc-chart-month ${tip === m.value ? "is-selected" : ""}`}
+              key={m.value}
+              aria-pressed={tip === m.value}
+              aria-label={`${m.label}: ${cards.map((card) => `${card.name} ${currency(amount(card))}`).join(", ")}`}
+              onClick={() => setTip((t) => (t === m.value ? null : m.value))}
+            >
+              <span className="cc-chart-bars">
+                {cards.map((card, i) => (
+                  <span
                     key={card.id}
                     className="cc-chart-bar"
                     style={{
-                      height: `${heightPct}%`,
+                      height: `${max ? (amount(card) / max) * 100 : 0}%`,
                       background: `var(--cat-${(i % CARD_COLOR_COUNT) + 1})`,
                     }}
-                    title={`${card.name} — ${m.label}: ${currency(amount)}`}
                   />
-                );
-              })}
-            </div>
-            <span className="cc-chart-month-label">{m.label}</span>
-          </div>
-        ))}
+                ))}
+              </span>
+              <span className="cc-chart-month-label">{m.short}</span>
+              {tip === m.value && (
+                <ChartTip
+                  title={periodLabel([m.value])}
+                  index={mi}
+                  count={months.length}
+                  lines={[
+                    ...cards.map((card, i) => ({
+                      key: card.id,
+                      label: card.name,
+                      value: currency(amount(card)),
+                      swatch: { background: `var(--cat-${(i % CARD_COLOR_COUNT) + 1})` },
+                    })),
+                    ...(cards.length > 1
+                      ? [{ key: "total", label: "Total", value: currency(cards.reduce((sum, card) => sum + amount(card), 0)) }]
+                      : []),
+                  ]}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <div className="table-scroll">

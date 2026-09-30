@@ -5,17 +5,21 @@ import BottomSheet from "../../components/ui/BottomSheet";
 import EmptyState from "../../components/ui/EmptyState";
 import ErrorBanner from "../../components/ui/ErrorBanner";
 import PeriodSheet from "../../components/PeriodSheet";
+import { useLedger } from "../ledger";
 import CardUtilizationChart from "./CardUtilizationChart";
+import CardCompareChart from "./CardCompareChart";
 import {
-  fetchCreditCards,
   createCreditCard,
   deleteCreditCard,
+  fetchCardData,
   fetchCardTransactions,
   createCardTransaction,
   deleteCardTransaction,
-  fetchCardUtilization,
 } from "./api";
+import { compareMonths, lastMonths, latestActiveMonth } from "./domain";
 import { currency, currentMonth, periodLabel, today } from "../../utils/format";
+
+const CHART_MONTHS = 6;
 
 const ADD_CARD_FORM_ID = "add-card-form";
 const ADD_SPEND_FORM_ID = "add-card-spend-form";
@@ -129,8 +133,9 @@ function AddSpendSheet({ card, onAdd, onClose, error }) {
   );
 }
 
-function CardSection({ card, index, months, onChanged, onDeleteCard }) {
+function CardSection({ card, index, months, compare, onChanged, onDeleteCard }) {
   const [transactions, setTransactions] = useState([]);
+  const [chartMonth, setChartMonth] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [error, setError] = useState("");
 
@@ -166,8 +171,8 @@ function CardSection({ card, index, months, onChanged, onDeleteCard }) {
   }
 
   return (
-    <section className="cc-section">
-      <div className="cc-visual" style={{ "--card-color": `var(--cat-${(index % CARD_COLOR_COUNT) + 1})` }}>
+    <section className="cc-section" style={{ "--card-color": `var(--cat-${(index % CARD_COLOR_COUNT) + 1})` }}>
+      <div className="cc-visual">
         <div className="cc-visual-top">
           <span className="cc-visual-name">{card.name}</span>
           <CreditCard size={22} aria-hidden="true" />
@@ -190,6 +195,13 @@ function CardSection({ card, index, months, onChanged, onDeleteCard }) {
       </div>
 
       {!showAdd && <ErrorBanner message={error} onDismiss={() => setError("")} />}
+
+      <CardCompareChart
+        rows={compare}
+        selected={chartMonth ?? latestActiveMonth(compare)}
+        tip={chartMonth}
+        onSelect={(month) => setChartMonth((m) => (m === month ? null : month))}
+      />
 
       <button
         type="button"
@@ -244,34 +256,42 @@ function CardSection({ card, index, months, onChanged, onDeleteCard }) {
   );
 }
 
-// Credit cards are tracked separately from the main ledger so nothing is
-// double-counted. Owns its own state, data loading and period.
+// Logged card spends are kept separate from the main ledger so nothing is
+// double-counted; bills are paid on Home as expenses tagged "<card> bill".
+// Each card compares the two. Owns its own state, data loading and period.
 export default function CreditCardsPage({ navigate }) {
-  const [cards, setCards] = useState([]);
-  const [utilization, setUtilization] = useState([]);
+  const { transactions: ledgerVersion } = useLedger();
+  const [data, setData] = useState({ cards: [], spends: [], bills: new Map() });
   const [selectedMonths, setSelectedMonths] = useState(() => [currentMonth()]);
   const [showAddCard, setShowAddCard] = useState(false);
   const [showPeriod, setShowPeriod] = useState(false);
   const [error, setError] = useState("");
 
-  const loadCards = useCallback(() => {
-    fetchCreditCards().then(setCards).catch((e) => setError(e.message));
+  const load = useCallback(() => {
+    fetchCardData()
+      .then(setData)
+      .catch((e) => setError(e.message));
   }, []);
 
-  const loadUtilization = useCallback(() => {
-    fetchCardUtilization().then(setUtilization).catch((e) => setError(e.message));
-  }, []);
+  // Reloads when a bill is paid from the + sheet, too.
+  useEffect(load, [load, ledgerVersion]);
 
-  useEffect(() => {
-    loadCards();
-    loadUtilization();
-  }, [loadCards, loadUtilization]);
+  const { cards } = data;
+  const chartMonths = lastMonths(CHART_MONTHS, today());
+  const compareFor = (card) =>
+    compareMonths(chartMonths, data.spends.filter((s) => s.card_id === card.id), data.bills.get(card.id) || []);
+  const paid = {};
+  data.bills.forEach((bills, cardId) =>
+    bills.forEach((b) => {
+      paid[`${cardId}:${b.month}`] = (paid[`${cardId}:${b.month}`] || 0) + Number(b.amount);
+    })
+  );
 
-  async function handleAddCard(data) {
+  async function handleAddCard(card) {
     try {
       setError("");
-      await createCreditCard(data);
-      loadCards();
+      await createCreditCard(card);
+      load();
       setShowAddCard(false);
     } catch (e) {
       setError(e.message);
@@ -283,8 +303,7 @@ export default function CreditCardsPage({ navigate }) {
     try {
       setError("");
       await deleteCreditCard(id);
-      loadCards();
-      loadUtilization();
+      load();
     } catch (e) {
       setError(e.message);
     }
@@ -294,7 +313,7 @@ export default function CreditCardsPage({ navigate }) {
     <>
       <PageHeader
         title="Credit cards"
-        subtitle="Tracked separately from your balance"
+        subtitle="Spends you log vs bills you pay"
         info="creditCards"
         onBack={() => navigate("more")}
       />
@@ -326,18 +345,19 @@ export default function CreditCardsPage({ navigate }) {
               card={card}
               index={i}
               months={selectedMonths}
-              onChanged={loadUtilization}
+              compare={compareFor(card)}
+              onChanged={load}
               onDeleteCard={handleDeleteCard}
             />
           ))
         )}
 
         <div className="section-head">
-          <h2>Monthly utilization</h2>
+          <h2>Bills paid</h2>
           <span className="muted">Last 6 months</span>
         </div>
         <div className="card">
-          <CardUtilizationChart cards={cards} utilization={utilization} />
+          <CardUtilizationChart cards={cards} months={chartMonths} paid={paid} />
         </div>
       </div>
 

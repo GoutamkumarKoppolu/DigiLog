@@ -47,6 +47,9 @@ export default function ReportPage({ navigate }) {
 
   const meta = KINDS.find((k) => k.value === kind);
   const { total, items } = breakdownByTag(data.rows, kind, data.previousRows);
+  // The donut slice tapped, if it's still in this breakdown.
+  const [tappedTag, setTappedTag] = useState(null);
+  const tapped = items.find((i) => i.tag === tappedTag);
 
   return (
     <>
@@ -63,10 +66,23 @@ export default function ReportPage({ navigate }) {
         <div className="card report-chart">
           <DonutChart
             label={`Donut chart of ${meta.noun} by tag`}
-            segments={items.map((i) => ({ key: i.tag, value: i.amount, color: i.color }))}
+            segments={items.map((i) => ({ key: i.tag, value: i.amount, color: i.color, label: `${i.tag}: ${currency(i.amount)}` }))}
+            selected={tapped?.tag ?? null}
+            onSelect={setTappedTag}
           >
-            <span className="donut-caption">Total {meta.noun}</span>
-            <Money value={total} className="donut-amount" />
+            {tapped ? (
+              <>
+                <span className="donut-caption donut-caption-tag">{tapped.tag}</span>
+                <Money value={tapped.amount} className="donut-amount" />
+                <span className="donut-caption">{(tapped.share * 100).toFixed(1)}% of total</span>
+              </>
+            ) : (
+              <>
+                <span className="donut-caption">Total {meta.noun}</span>
+                <Money value={total} className="donut-amount" />
+                {items.length > 0 && <span className="donut-caption">Tap a slice for details</span>}
+              </>
+            )}
           </DonutChart>
         </div>
 

@@ -9,7 +9,7 @@ import { LedgerProvider, TransactionSheet } from "./features/ledger";
 import HomePage from "./features/home/HomePage";
 import ReportPage from "./features/report/ReportPage";
 import { SavingsPage } from "./features/savings";
-import CreditCardsPage from "./features/cards/CreditCardsPage";
+import { CreditCardsPage, useCardBillTags } from "./features/cards";
 import SettingsPage from "./features/settings/SettingsPage";
 import MorePage from "./features/settings/MorePage";
 import AppearancePage from "./features/appearance/AppearancePage";
@@ -50,10 +50,11 @@ const TABS = [
   { id: "more", label: "More", icon: LayoutGrid },
 ];
 
-// Repay / Received chips in the + sheet. A component of its own because it
-// reads the ledger, which App provides.
+// The + sheet with what other features add to it: Repay / Received chips and
+// the "Paying a credit card bill" switch. A component of its own because
+// those read the ledger, which App provides.
 function AddSheet(props) {
-  return <TransactionSheet {...props} entries={useBorrowEntries()} />;
+  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} />;
 }
 
 export default function App() {

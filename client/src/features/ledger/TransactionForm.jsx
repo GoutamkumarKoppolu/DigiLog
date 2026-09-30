@@ -8,6 +8,11 @@ import KindChips from "./KindChips";
 
 const QUICK_TAG_COUNT = 8;
 
+const sameTag = (a, b) => a.trim().toLowerCase() === (b || "").trim().toLowerCase();
+
+// The tag group (e.g. credit card bills) a saved tag belongs to, if any.
+const groupOfTag = (groups, tag) => groups.find((g) => g.tags.some((t) => sameTag(t.tag, tag)))?.id ?? null;
+
 // `seed` carries the type and amount over when coming back from an extra
 // entry (e.g. Repay) in the same sheet.
 function initialForm(transaction, seed) {
@@ -38,15 +43,31 @@ function initialForm(transaction, seed) {
 // Add/edit form. Mounted fresh for each sheet, so it initialises from props
 // once. Submitted by the sheet's footer button via the `id`/`form` attribute.
 // `extras` are more Type chips (e.g. Repay); picking one hands over to the
-// sheet with the amount typed so far.
+// sheet with the amount typed so far. `tagGroups` are switches that swap the
+// Tag field for fixed tags, for one kind of type: { id, kind, label, info,
+// description, tags: [{ tag, label }] } (e.g. "Paying a credit card bill").
 export default function TransactionForm(props) {
-  const { id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit, seed, extras = [], onPickExtra } = props;
+  const { id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit, seed } = props;
+  const { extras = [], onPickExtra, tagGroups = [] } = props;
   const [form, setForm] = useState(() => initialForm(transaction, seed));
+  // undefined until the switch is touched: follows the saved tag, since
+  // groups may load after the form opens.
+  const [groupChoice, setGroupId] = useState(undefined);
+  const groupId = groupChoice === undefined ? groupOfTag(tagGroups, transaction?.tag) : groupChoice;
 
   // Default to "expense" (the most common entry), else the first type.
   const defaultType = (transactionTypes.find((t) => t.name === "expense") || transactionTypes[0])?.name || "";
   const type = form.type || defaultType;
-  const isSavingType = transactionTypes.find((t) => t.name === type)?.kind === "saving";
+  const kind = transactionTypes.find((t) => t.name === type)?.kind;
+  const isSavingType = kind === "saving";
+  const groups = tagGroups.filter((g) => g.kind === kind && g.tags.length);
+  const group = groups.find((g) => g.id === groupId);
+
+  // A group's tag only fits with the switch on, a typed tag only with it off.
+  function toggleGroup(g, on) {
+    setGroupId(on ? g.id : null);
+    if (on !== g.tags.some((t) => sameTag(t.tag, form.tag))) set("tag", "");
+  }
 
   const set = (name, value) => setForm((f) => ({ ...f, [name]: value }));
   const handleChange = (e) => set(e.target.name, e.target.value);
@@ -97,22 +118,58 @@ export default function TransactionForm(props) {
         />
       )}
 
-      <label className="field" htmlFor="tx-tag">
-        <span className="field-label">
-          Tag / Category <InfoButton topic="tags" />
-        </span>
-        <input
-          id="tx-tag"
-          type="text"
-          name="tag"
-          className="input"
-          placeholder="e.g. Shopping, Salary, Food"
-          value={form.tag}
-          onChange={handleChange}
-          required
+      {groups.map((g) => (
+        <Switch
+          key={g.id}
+          name={g.id}
+          checked={group?.id === g.id}
+          onChange={(on) => toggleGroup(g, on)}
+          label={g.label}
+          info={g.info}
+          description={g.description}
         />
-      </label>
-      <TagSuggestions value={form.tag} tags={existingTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
+      ))}
+
+      {group ? (
+        <div className="field">
+          <span className="field-label">{group.pickLabel}</span>
+          <div className="chip-group" role="radiogroup" aria-label={group.pickLabel}>
+            {group.tags.map((t) => (
+              <button
+                type="button"
+                key={t.tag}
+                role="radio"
+                aria-checked={sameTag(t.tag, form.tag)}
+                className={`chip ${sameTag(t.tag, form.tag) ? "is-active" : ""}`}
+                onClick={() => set("tag", t.tag)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          {/* Keeps native "required" validation for the chip choice. */}
+          <input className="visually-hidden" tabIndex={-1} aria-hidden="true" value={form.tag} onChange={() => {}} required />
+        </div>
+      ) : (
+        <>
+          <label className="field" htmlFor="tx-tag">
+            <span className="field-label">
+              Tag / Category <InfoButton topic="tags" />
+            </span>
+            <input
+              id="tx-tag"
+              type="text"
+              name="tag"
+              className="input"
+              placeholder="e.g. Shopping, Salary, Food"
+              value={form.tag}
+              onChange={handleChange}
+              required
+            />
+          </label>
+          <TagSuggestions value={form.tag} tags={existingTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
+        </>
+      )}
 
       <div className="field-grid">
         <label className="field">
