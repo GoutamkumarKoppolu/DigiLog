@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Handshake, Plus } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import SegmentedControl from "../../components/ui/SegmentedControl";
@@ -7,6 +7,8 @@ import ErrorBanner from "../../components/ui/ErrorBanner";
 import FormSheet from "../../components/ui/FormSheet";
 import Money from "../../components/ui/Money";
 import { currency } from "../../utils/format";
+import { useLedger } from "../ledger";
+import { fetchPots } from "../savings";
 import {
   createPayment,
   createRecord,
@@ -27,13 +29,15 @@ const PAYMENT_FORM_ID = "borrow-payment-form";
 const TABS = Object.entries(DIRECTIONS).map(([value, m]) => ({ value, label: m.tab }));
 
 // Money borrowed from people and lent to people, one tab each. Switching tabs
-// isn't a level, so Back from either tab goes to More. Nothing here touches
-// the main balance.
-export default function BorrowingPage({ navigate }) {
+// isn't a level, so Back from either tab goes to More. `param` is a record id
+// (from a Home row): that record opens, and Back closes it again.
+export default function BorrowingPage({ navigate, param }) {
+  const { movements, refresh: refreshLedger } = useLedger();
   const [direction, setDirection] = useState("borrowed");
   const meta = DIRECTIONS[direction];
 
   const [data, setData] = useState({ records: [], payments: [] });
+  const [pots, setPots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openId, setOpenId] = useState(null);
@@ -43,22 +47,45 @@ export default function BorrowingPage({ navigate }) {
 
   const load = useCallback(
     () =>
-      fetchBorrowingData()
-        .then(setData)
+      Promise.all([fetchBorrowingData(), fetchPots()])
+        .then(([next, nextPots]) => {
+          setData(next);
+          setPots(nextPots);
+        })
         .catch((e) => setError(e.message))
         .finally(() => setLoading(false)),
     []
   );
 
+  // Reloads after Repay/Received from the + sheet, too.
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, movements]);
 
+  // Opening a record from Home; Back drops the param and closes it.
+  const shownParam = useRef(null);
+  useEffect(() => {
+    const record = param && data.records.find((r) => String(r.id) === param);
+    if (record && shownParam.current !== param) {
+      shownParam.current = param;
+      setDirection(record.direction);
+      setShowCompleted(true);
+      setOpenId(record.id);
+      requestAnimationFrame(() => document.getElementById(`record-card-${record.id}`)?.scrollIntoView({ block: "center" }));
+    } else if (!param && shownParam.current) {
+      shownParam.current = null;
+      setOpenId(null);
+    }
+  }, [param, data.records]);
+
+  // Changes can move money in or out of the balance and savings, so Home
+  // and Savings reload too.
   async function run(action) {
     try {
       setError("");
       await action();
       await load();
+      refreshLedger();
       return true;
     } catch (e) {
       setError(e.message);
@@ -96,11 +123,14 @@ export default function BorrowingPage({ navigate }) {
   function handleDeleteRecord(r) {
     const count = r.payments.length;
     const extra = count ? ` and its ${count} payment${count === 1 ? "" : "s"}` : "";
-    if (window.confirm(`Delete ${currency(r.amount)} with ${r.person}${extra}? This can't be undone.`)) submit(() => deleteRecord(r.id));
+    const linked = r.linked_to || r.payments.some((p) => p.linked_to);
+    const undo = linked ? " Any money it moved in or out of your balance or savings is undone." : "";
+    if (window.confirm(`Delete ${currency(r.amount)} with ${r.person}${extra}?${undo} This can't be undone.`)) submit(() => deleteRecord(r.id));
   }
 
   function handleDeletePayment(p) {
-    if (window.confirm(`Delete this ${currency(p.amount)} payment?`)) submit(() => deletePayment(p.id));
+    const undo = p.linked_to ? " The money goes back to where it came from." : "";
+    if (window.confirm(`Delete this ${currency(p.amount)} payment?${undo}`)) submit(() => deletePayment(p.id));
   }
 
   function toggleCompleted(record) {
@@ -125,7 +155,7 @@ export default function BorrowingPage({ navigate }) {
 
   return (
     <>
-      <PageHeader title="Borrowed & lent" subtitle="Not linked to your balance" info="borrowing" onBack={() => navigate("more")} />
+      <PageHeader title="Borrowed & lent" subtitle="Who owes what" info="borrowing" onBack={() => navigate("more")} />
       <div className="page-body">
         <SegmentedControl
           label="Borrowed or lent"
@@ -193,7 +223,7 @@ export default function BorrowingPage({ navigate }) {
           onClose={close}
           onDelete={sheet.record ? () => handleDeleteRecord(sheet.record) : null}
         >
-          <RecordForm id={RECORD_FORM_ID} record={sheet.record} meta={meta} onSubmit={handleSaveRecord} />
+          <RecordForm id={RECORD_FORM_ID} record={sheet.record} meta={meta} pots={pots} onSubmit={handleSaveRecord} />
         </FormSheet>
       )}
 
@@ -210,6 +240,8 @@ export default function BorrowingPage({ navigate }) {
             id={PAYMENT_FORM_ID}
             payment={sheet.payment}
             max={maxPayment(sheet.record, sheet.payment)}
+            meta={meta}
+            pots={pots}
             onSubmit={(form) =>
               submit(() => (sheet.payment ? updatePayment(sheet.payment.id, form) : createPayment(sheet.record.id, form)))
             }

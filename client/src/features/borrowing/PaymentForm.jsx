@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { currency, today } from "../../utils/format";
+import MoneyLinkField from "./MoneyLinkField";
+import { initialLink, linkPayload } from "./moneyLink";
 
-// One repayment: amount (pre-filled with what's left when adding) and date.
-// Submitted by the sheet's footer button via the `id`/`form` attribute.
-export default function PaymentForm({ id, payment, max, onSubmit }) {
+// One repayment: amount (pre-filled with what's left when adding), where the
+// money went, and date. Submitted by the sheet's footer button via the
+// `id`/`form` attribute.
+export default function PaymentForm({ id, payment, max, meta, pots, onSubmit }) {
+  const [link, setLink] = useState(() => initialLink(payment));
   const [form, setForm] = useState(() => ({
     amount: payment ? String(payment.amount) : max > 0 ? String(max) : "",
     date: payment?.date ?? today(),
@@ -13,7 +17,7 @@ export default function PaymentForm({ id, payment, max, onSubmit }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit({ ...form, amount: Number(form.amount) });
+    onSubmit({ ...form, amount: Number(form.amount), ...linkPayload(link) });
   }
 
   return (
@@ -37,6 +41,7 @@ export default function PaymentForm({ id, payment, max, onSubmit }) {
         </span>
         <span className="field-hint">Up to {currency(max)}</span>
       </label>
+      <MoneyLinkField label={meta.paymentLink} flow={meta.paymentFlow} value={link} onChange={setLink} pots={pots} editing={payment} />
       <div className="field-grid">
         <label className="field">
           <span className="field-label">Date</span>

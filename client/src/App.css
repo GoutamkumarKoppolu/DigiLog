@@ -2121,6 +2121,19 @@ button.list-row:active {
 
 /* ---------- Borrowed & lent ---------- */
 
+/* Pot name + suggestions under "Money went into": the same 10px between
+   input and chips as a tag field in a form (field gap alone is too tight). */
+.link-pot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.link-pot .chip-group-scroll {
+  margin-top: 0;
+}
+
 .record-head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

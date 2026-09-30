@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanPhone, exceeds, maxPayment, summarizeDirection, summarizeRecord, whatsappNumber } from "./domain";
+import { borrowMovements, cleanPhone, exceeds, linkLabel, maxPayment, summarizeDirection, summarizeRecord, whatsappNumber } from "./domain";
 
 const rec = (id, direction, amount, extra = {}) => ({
   id,
@@ -82,5 +82,39 @@ describe("phone numbers", () => {
     expect(whatsappNumber("09876543210")).toBe("919876543210");
     expect(whatsappNumber("+1 415 555 0100")).toBe("14155550100");
     expect(whatsappNumber("")).toBe("");
+  });
+});
+
+describe("borrowMovements", () => {
+  const link = (linked_to, pot = null) => ({ linked_to, pot });
+
+  it("lent from balance goes out, received into savings comes in", () => {
+    const records = [rec(1, "lent", 10000, link("balance"))];
+    const payments = [{ ...pay(1, 1, 4000), ...link("savings", "Trip"), note: "UPI" }];
+    expect(borrowMovements(records, payments)).toEqual([
+      expect.objectContaining({ key: "borrowing-record-1", flow: "out", account: "balance", pot: null, amount: 10000, title: "Lent · Person 1", route: "borrowing/1" }),
+      expect.objectContaining({ key: "borrowing-payment-1", flow: "in", account: "savings", pot: "Trip", amount: 4000, title: "Received · Person 1", note: "UPI" }),
+    ]);
+  });
+
+  it("borrowed into balance comes in, repaying goes out", () => {
+    const moves = borrowMovements([rec(2, "borrowed", 30000, link("balance"))], [{ ...pay(1, 2, 30000), ...link("balance") }]);
+    expect(moves.map((m) => [m.title, m.flow])).toEqual([
+      ["Borrowed · Person 2", "in"],
+      ["Repay · Person 2", "out"],
+    ]);
+  });
+
+  it("skips anything just noted, including rows from before linking existed", () => {
+    const records = [rec(1, "lent", 10000), rec(2, "lent", 5000, link(null))];
+    expect(borrowMovements(records, [pay(1, 1, 1000), pay(2, 9, 500)])).toEqual([]);
+  });
+});
+
+describe("linkLabel", () => {
+  it("says where the money went", () => {
+    expect(linkLabel({ linked_to: "balance" }, "out")).toBe("from balance");
+    expect(linkLabel({ linked_to: "savings", pot: "Trip" }, "in")).toBe("into Trip savings");
+    expect(linkLabel({ linked_to: null }, "in")).toBe("");
   });
 });

@@ -4,14 +4,17 @@ import InfoButton from "../../components/ui/InfoButton";
 import TagSuggestions from "../../components/ui/TagSuggestions";
 import { deductsFromBalance } from "../../domain/transactions";
 import { today } from "../../utils/format";
+import KindChips from "./KindChips";
 
 const QUICK_TAG_COUNT = 8;
 
-function initialForm(transaction) {
+// `seed` carries the type and amount over when coming back from an extra
+// entry (e.g. Repay) in the same sheet.
+function initialForm(transaction, seed) {
   if (!transaction) {
     return {
-      type: "",
-      amount: "",
+      type: seed?.type || "",
+      amount: seed?.amount || "",
       tag: "",
       payment_method: "",
       payment_source: "",
@@ -34,8 +37,11 @@ function initialForm(transaction) {
 
 // Add/edit form. Mounted fresh for each sheet, so it initialises from props
 // once. Submitted by the sheet's footer button via the `id`/`form` attribute.
-export default function TransactionForm({ id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit }) {
-  const [form, setForm] = useState(() => initialForm(transaction));
+// `extras` are more Type chips (e.g. Repay); picking one hands over to the
+// sheet with the amount typed so far.
+export default function TransactionForm(props) {
+  const { id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit, seed, extras = [], onPickExtra } = props;
+  const [form, setForm] = useState(() => initialForm(transaction, seed));
 
   // Default to "expense" (the most common entry), else the first type.
   const defaultType = (transactionTypes.find((t) => t.name === "expense") || transactionTypes[0])?.name || "";
@@ -71,23 +77,14 @@ export default function TransactionForm({ id, transaction, transactionTypes, pay
         </span>
       </label>
 
-      <div className="field">
-        <span className="field-label">Type</span>
-        <div className="chip-group" role="radiogroup" aria-label="Type">
-          {transactionTypes.map((t) => (
-            <button
-              type="button"
-              key={t.id}
-              role="radio"
-              aria-checked={type === t.name}
-              className={`chip ${type === t.name ? "is-active" : ""}`}
-              onClick={() => set("type", t.name)}
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      <KindChips
+        types={transactionTypes}
+        extras={extras}
+        type={type}
+        extra={null}
+        onPickType={(name) => set("type", name)}
+        onPickExtra={(extraId) => onPickExtra(extraId, form.amount)}
+      />
 
       {isSavingType && (
         <Switch

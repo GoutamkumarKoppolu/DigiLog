@@ -105,9 +105,20 @@ describe("parseBackup: borrowed & lent", () => {
     phone: "+919876543210",
     note: "Bike down payment",
     completed: false,
+    linked_to: "balance",
+    pot: null,
     created_at: "2026-08-12T10:00:00.000Z",
   };
-  const payment = { id: 1, record_id: 1, amount: 10000, date: "2026-09-02", note: null, created_at: "2026-09-02T10:00:00.000Z" };
+  const payment = {
+    id: 1,
+    record_id: 1,
+    amount: 10000,
+    date: "2026-09-02",
+    note: null,
+    linked_to: "savings",
+    pot: "Trip",
+    created_at: "2026-09-02T10:00:00.000Z",
+  };
 
   it("imports records and payments", () => {
     const { tables } = parseBackup(backupWith({ borrow_records: [record], borrow_payments: [payment] }));
@@ -124,6 +135,19 @@ describe("parseBackup: borrowed & lent", () => {
   it("fills in missing optional fields", () => {
     const { tables } = parseBackup(backupWith({ borrow_records: [{ ...record, phone: undefined, note: "", completed: undefined }] }));
     expect(tables.borrow_records[0]).toMatchObject({ phone: null, note: null, completed: false });
+  });
+
+  it("treats rows from before linking as just noted", () => {
+    const { tables } = parseBackup(
+      backupWith({ borrow_records: [{ ...record, linked_to: undefined }], borrow_payments: [{ ...payment, linked_to: undefined, pot: undefined }] })
+    );
+    expect(tables.borrow_records[0]).toMatchObject({ linked_to: null, pot: null });
+    expect(tables.borrow_payments[0]).toMatchObject({ linked_to: null, pot: null });
+  });
+
+  it("rejects an unknown link and savings without a pot", () => {
+    expect(() => parseBackup(backupWith({ borrow_records: [{ ...record, linked_to: "wallet" }] }))).toThrow(/linked_to must be balance or savings/);
+    expect(() => parseBackup(backupWith({ borrow_records: [record], borrow_payments: [{ ...payment, pot: "" }] }))).toThrow(/pot is missing/);
   });
 
   it("rejects an unknown direction and payments for missing records", () => {

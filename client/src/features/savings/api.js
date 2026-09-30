@@ -1,7 +1,8 @@
 // Savings data access. Deposits come from the main ledger (transactions of
-// kind "saving"); withdrawals live in their own store.
+// kind "saving"); withdrawals live in their own store; movements (money other
+// features move into or out of a pot) come from the core registry.
 import { db } from "../../db";
-import { fetchTransactions } from "../../api";
+import { fetchMovements, fetchTransactions } from "../../api";
 import { requireNonEmpty, requirePositiveAmount } from "../../db/validators";
 import { currency } from "../../utils/format";
 import { computePots } from "./domain";
@@ -9,11 +10,29 @@ import { computePots } from "./domain";
 const nowIso = () => new Date().toISOString();
 
 export async function fetchSavingsData() {
-  const [savings, withdrawals] = await Promise.all([
+  const [savings, withdrawals, movements] = await Promise.all([
     fetchTransactions({ kind: "saving" }),
     db.savings_withdrawals.toArray(),
+    fetchMovements(),
   ]);
-  return { savings, withdrawals };
+  return { savings, withdrawals, movements: movements.filter((m) => m.account === "savings") };
+}
+
+const belowZero = (pot) => Math.round(pot.remaining * 100) < 0;
+
+export async function fetchPots() {
+  const { savings, withdrawals, movements } = await fetchSavingsData();
+  return computePots(savings, withdrawals, movements);
+}
+
+// For features that move money into or out of pots: throws if `change`
+// (current movements → movements after the edit) would leave a pot below zero.
+export async function checkPots(change) {
+  const { savings, withdrawals, movements } = await fetchSavingsData();
+  const short = computePots(savings, withdrawals, change(movements)).find(belowZero);
+  if (!short) return;
+  const before = computePots(savings, withdrawals, movements).find((p) => p.tag === short.tag);
+  throw new Error(`Only ${currency(Math.max(0, before?.remaining ?? 0))} left in "${short.tag}" savings`);
 }
 
 export async function createWithdrawal(data) {
@@ -21,8 +40,8 @@ export async function createWithdrawal(data) {
   const tag = requireNonEmpty(data.tag, "pot");
   if (!data.date) throw new Error("date is required");
 
-  const { savings, withdrawals } = await fetchSavingsData();
-  const pot = computePots(savings, withdrawals).find((p) => p.tag === tag);
+  const { savings, withdrawals, movements } = await fetchSavingsData();
+  const pot = computePots(savings, withdrawals, movements).find((p) => p.tag === tag);
   if (!pot) throw new Error(`No savings found for "${tag}"`);
   // Compare in paise so float noise (e.g. 0.1 + 0.2) never blocks using the full pot.
   if (Math.round(Number(data.amount) * 100) > Math.round(pot.remaining * 100)) {
@@ -51,14 +70,14 @@ export async function deleteWithdrawal(id) {
 // what's saved in it.
 export async function guardSavingsPots(before, after) {
   if (before.type_kind !== "saving") return;
-  const { savings, withdrawals } = await fetchSavingsData();
+  const { savings, withdrawals, movements } = await fetchSavingsData();
   const nextSavings = savings.filter((t) => t.id !== before.id);
   if (after && after.type_kind === "saving") nextSavings.push(after);
 
-  const pot = computePots(nextSavings, withdrawals).find((p) => p.tag === before.tag);
-  if (pot && Math.round(pot.remaining * 100) < 0) {
+  const pot = computePots(nextSavings, withdrawals, movements).find((p) => p.tag === before.tag);
+  if (pot && belowZero(pot)) {
     throw new Error(
-      `${currency(pot.used)} has been used from "${before.tag}". Delete those entries on the Savings page first.`
+      `${currency(pot.used)} has been used from "${before.tag}". Delete what was used from it first.`
     );
   }
 }

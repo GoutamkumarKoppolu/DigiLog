@@ -5,6 +5,7 @@ import {
   deleteOption,
   deleteTransaction,
   fetchAllOptions,
+  fetchMovements,
   fetchOverview,
   fetchTags,
   fetchTransactions,
@@ -21,6 +22,8 @@ const emptyOverview = { totalEarnings: 0, totalExpenses: 0, totalSavings: 0, bal
 
 export function LedgerProvider({ children }) {
   const [transactions, setTransactions] = useState([]);
+  // All movements (e.g. repayments), newest first. Home filters them itself.
+  const [movements, setMovements] = useState([]);
   const [tags, setTags] = useState([]);
   const [options, setOptions] = useState(emptyOptions);
   const [overview, setOverview] = useState(emptyOverview);
@@ -45,6 +48,7 @@ export function LedgerProvider({ children }) {
     loadTransactions();
     fetchTags().then(setTags).catch(fail);
     fetchOverview().then(setOverview).catch(fail);
+    fetchMovements().then(setMovements).catch(fail);
   }, [loadTransactions, fail]);
 
   useEffect(() => {
@@ -76,6 +80,7 @@ export function LedgerProvider({ children }) {
   const value = useMemo(
     () => ({
       transactions,
+      movements,
       tags,
       options,
       overview,
@@ -91,7 +96,7 @@ export function LedgerProvider({ children }) {
       addOption: (kind, payload) => run(() => addOption(kind, payload), loadOptions),
       removeOption: (kind, id) => run(() => deleteOption(kind, id), loadOptions),
     }),
-    [transactions, tags, options, overview, filters, setFilters, loading, error, refresh, run, loadOptions]
+    [transactions, movements, tags, options, overview, filters, setFilters, loading, error, refresh, run, loadOptions]
   );
 
   return <LedgerContext.Provider value={value}>{children}</LedgerContext.Provider>;

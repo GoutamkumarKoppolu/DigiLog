@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { today } from "../../utils/format";
+import MoneyLinkField from "./MoneyLinkField";
+import { initialLink, linkPayload } from "./moneyLink";
 
-// Who, how much, when, and optionally their phone and why. Submitted by the
-// sheet's footer button via the `id`/`form` attribute.
-export default function RecordForm({ id, record, meta, onSubmit }) {
+// Who, how much, when, where the money went, and optionally their phone and
+// why. Submitted by the sheet's footer button via the `id`/`form` attribute.
+export default function RecordForm({ id, record, meta, pots, onSubmit }) {
+  const [link, setLink] = useState(() => initialLink(record));
   const [form, setForm] = useState(() => ({
     person: record?.person ?? "",
     amount: record ? String(record.amount) : "",
@@ -15,7 +18,7 @@ export default function RecordForm({ id, record, meta, onSubmit }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onSubmit({ ...form, amount: Number(form.amount) });
+    onSubmit({ ...form, amount: Number(form.amount), ...linkPayload(link) });
   }
 
   return (
@@ -58,6 +61,8 @@ export default function RecordForm({ id, record, meta, onSubmit }) {
           <input type="date" name="date" className="input" value={form.date} onChange={handleChange} required />
         </label>
       </div>
+
+      <MoneyLinkField label={meta.recordLink} flow={meta.recordFlow} value={link} onChange={setLink} pots={pots} editing={record} />
 
       <label className="field">
         <span className="field-label">Phone (optional)</span>

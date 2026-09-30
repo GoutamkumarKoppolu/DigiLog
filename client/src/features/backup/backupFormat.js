@@ -66,6 +66,15 @@ const blob = (v, field) => {
 
 const optionalBlob = (v, field) => (v === undefined || v === null ? null : blob(v, field));
 
+// Borrowed & lent: where a record's or payment's money went. Added after
+// database v5 without a new version: rows without it were only noted.
+const moneyLink = (r) => {
+  const linkedTo = text(r.linked_to);
+  if (!linkedTo) return { linked_to: null, pot: null };
+  need(["balance", "savings"].includes(linkedTo), "linked_to must be balance or savings");
+  return { linked_to: linkedTo, pot: linkedTo === "savings" ? required(r.pot, "pot") : null };
+};
+
 // ---------- per-table specs, in import order (parents before children) ----------
 // Each takes a raw row plus a context of already-normalized tables and
 // returns the clean row to store.
@@ -190,6 +199,7 @@ export const TABLE_SPECS = {
       phone: optional(r.phone),
       note: optional(r.note),
       completed: r.completed === true,
+      ...moneyLink(r),
       created_at: createdAt(r.created_at, d),
     };
   },
@@ -203,6 +213,7 @@ export const TABLE_SPECS = {
       amount: amount(r.amount),
       date: d,
       note: optional(r.note),
+      ...moneyLink(r),
       created_at: createdAt(r.created_at, d),
     };
   },

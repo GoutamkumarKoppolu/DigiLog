@@ -4,7 +4,7 @@ import Money from "../../components/ui/Money";
 import StatCard from "../../components/ui/StatCard";
 import ErrorBanner from "../../components/ui/ErrorBanner";
 import { TransactionList, useLedger } from "../ledger";
-import { computeTotals, DEDUCTION_FILTERS, KIND_LABELS } from "../../domain/transactions";
+import { computeTotals, DEDUCTION_FILTERS, KIND_LABELS, matchesMovementFilters } from "../../domain/transactions";
 import { currency, periodLabel } from "../../utils/format";
 import FilterSheet from "./FilterSheet";
 import { DEDUCTION_OPTIONS } from "./filterOptions";
@@ -22,6 +22,7 @@ export default function HomePage({ navigate, onOpenTransaction }) {
   const ledger = useLedger();
   const [showFilters, setShowFilters] = useState(false);
   const { earnings, expenses, savings } = computeTotals(ledger.transactions);
+  const movements = ledger.movements.filter((m) => matchesMovementFilters(m, ledger.filters));
 
   return (
     <div className="home">
@@ -75,7 +76,12 @@ export default function HomePage({ navigate, onOpenTransaction }) {
         {ledger.loading ? (
           <p className="muted">Loading…</p>
         ) : (
-          <TransactionList transactions={ledger.transactions} onSelect={onOpenTransaction} />
+          <TransactionList
+            transactions={ledger.transactions}
+            movements={movements}
+            onSelect={onOpenTransaction}
+            onSelectMovement={(m) => navigate(m.route)}
+          />
         )}
       </div>
 
