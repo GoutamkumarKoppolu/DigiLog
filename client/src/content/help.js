@@ -28,6 +28,15 @@ export const HELP = {
     ],
     example: "Logged in September: ₹12,400. Bill paid on 1 October: ₹13,150 → September shows ₹750 paid but not logged, worth a look.",
   },
+  cardEstimate: {
+    title: "Estimated card bill",
+    body: [
+      "This is worked out from the subscriptions charged to this card that renew this month: monthly ones every month, yearly ones only in their month, and free trials only in the month they end.",
+      "It's an estimate: it doesn't include what you log or buy on the card yourself. You pay it with the card's bill, at the end of the month or early next month.",
+      "To add a subscription to it, edit the subscription and pick the card under \"Charged to a credit card\".",
+    ],
+    example: "Netflix ₹649 on the 12th and Spotify ₹199 on the 20th, both on HDFC Regalia → estimated bill for October ₹848.",
+  },
   cardBills: {
     title: "Paying a credit card bill",
     body: [

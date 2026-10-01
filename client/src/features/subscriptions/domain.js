@@ -175,3 +175,30 @@ export function upcomingReminders(subs, now, { perSub = 3, formatAmount = (n) =>
     });
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
+
+// ---------- charged to a credit card ----------
+
+// The dates a subscription charges in a month ("YYYY-MM"): a monthly one
+// once, a yearly one only in its month, a trial only once it ends. Cancelled
+// ones charge nothing.
+export function chargesInMonth(s, month) {
+  if (isCancelled(s)) return [];
+  return renewalsFrom(s, `${month}-01`, 3).filter((d) => d.startsWith(month));
+}
+
+// This month's estimated bill per card from the subscriptions charged to it:
+// Map card id → { amount, count }.
+export function cardEstimates(subs, month) {
+  const out = new Map();
+  subs
+    .filter((s) => s.card_id != null)
+    .forEach((s) => {
+      const n = chargesInMonth(s, month).length;
+      if (!n) return;
+      const e = out.get(s.card_id) || { paise: 0, count: 0 };
+      e.paise += toPaise(s.amount) * n;
+      e.count += 1;
+      out.set(s.card_id, e);
+    });
+  return new Map([...out].map(([id, e]) => [id, { amount: fromPaise(e.paise), count: e.count }]));
+}

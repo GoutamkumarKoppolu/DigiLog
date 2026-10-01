@@ -1,8 +1,9 @@
 // Subscription data access. Tracking only: nothing here touches the ledger
-// or the balance.
+// or the balance. A subscription can be charged to a credit card (`card_id`),
+// which feeds that card's estimated bill (registered in ./index.js).
 import { db } from "../../db";
 import { requireNonEmpty, requirePositiveAmount } from "../../db/validators";
-import { CYCLES, REMIND_OPTIONS } from "./domain";
+import { CYCLES, REMIND_OPTIONS, cardEstimates } from "./domain";
 
 const nowIso = () => new Date().toISOString();
 
@@ -37,17 +38,32 @@ function fields(data) {
     category: data.category?.trim() || null,
     trial_end: data.trial_end || null,
     remind,
+    card_id: data.card_id ? Number(data.card_id) : null,
   };
 }
 
+// The card must still exist (it may have been deleted while the form was open).
+async function checkCard(f) {
+  if (f.card_id != null && !(await db.credit_cards.get(f.card_id))) throw new Error("That credit card no longer exists");
+  return f;
+}
+
+// Card estimate source: this month's subscription charges per card. Cards
+// deleted since are left out (their subscriptions just aren't linked any more).
+export async function fetchSubscriptionEstimates(month) {
+  const [subs, cards] = await Promise.all([db.subscriptions.toArray(), db.credit_cards.toArray()]);
+  const ids = new Set(cards.map((c) => c.id));
+  return cardEstimates(subs.filter((s) => ids.has(s.card_id)), month);
+}
+
 export async function createSubscription(data) {
-  const id = await db.subscriptions.add({ ...fields(data), cancelled_at: null, created_at: nowIso() });
+  const id = await db.subscriptions.add({ ...(await checkCard(fields(data))), cancelled_at: null, created_at: nowIso() });
   return db.subscriptions.get(id);
 }
 
 export async function updateSubscription(id, data) {
   const s = await getSubscription(id);
-  await db.subscriptions.update(s.id, fields(data));
+  await db.subscriptions.update(s.id, await checkCard(fields(data)));
   return db.subscriptions.get(s.id);
 }
 

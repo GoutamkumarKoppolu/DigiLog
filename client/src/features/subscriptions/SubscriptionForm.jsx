@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SegmentedControl from "../../components/ui/SegmentedControl";
 import Switch from "../../components/ui/Switch";
+import InfoButton from "../../components/ui/InfoButton";
 import TagSuggestions from "../../components/ui/TagSuggestions";
 import { today } from "../../utils/format";
 import { CYCLES, REMIND_OPTIONS, nextRenewal } from "./domain";
@@ -15,9 +16,10 @@ const ordinal = (n) => {
 
 // Add or edit a subscription. Monthly ones take a day of the month; yearly
 // ones a renewal date (its day and month are kept). Payment method and
-// category are typed freely, with tap-to-fill chips. Submitted by the sheet's
-// footer button via the `id`/`form` attribute.
-export default function SubscriptionForm({ id, subscription: s, methods, categories, remindersNote, onSubmit }) {
+// category are typed freely, with tap-to-fill chips. Charged to one of your
+// `cards`, the card is the payment method (and feeds its estimated bill).
+// Submitted by the sheet's footer button via the `id`/`form` attribute.
+export default function SubscriptionForm({ id, subscription: s, methods, categories, remindersNote, cards = [], onSubmit }) {
   const [form, setForm] = useState(() => ({
     name: s?.name ?? "",
     amount: s ? String(s.amount) : "",
@@ -30,7 +32,10 @@ export default function SubscriptionForm({ id, subscription: s, methods, categor
     onTrial: Boolean(s?.trial_end),
     trial_end: s?.trial_end ?? "",
     remind: s?.remind ?? "1",
+    // Only a card that still exists.
+    card_id: cards.some((c) => c.id === s?.card_id) ? s.card_id : null,
   }));
+  const card = cards.find((c) => c.id === form.card_id);
   const set = (name, value) => setForm((f) => ({ ...f, [name]: value }));
   const handleChange = (e) => set(e.target.name, e.target.value);
   const day = Number(form.day);
@@ -44,7 +49,8 @@ export default function SubscriptionForm({ id, subscription: s, methods, categor
       cycle: form.cycle,
       day: yearly ? Number(form.renews.slice(8, 10)) : day,
       month: yearly ? Number(form.renews.slice(5, 7)) : null,
-      payment_method: form.payment_method,
+      payment_method: card ? card.name : form.payment_method,
+      card_id: card ? card.id : null,
       category: form.category,
       trial_end: form.onTrial ? form.trial_end : null,
       remind: form.remind,
@@ -117,18 +123,45 @@ export default function SubscriptionForm({ id, subscription: s, methods, categor
         </label>
       )}
 
-      <label className="field">
-        <span className="field-label">Payment method</span>
-        <input
-          className="input"
-          name="payment_method"
-          value={form.payment_method}
-          onChange={handleChange}
-          placeholder="e.g. HDFC credit card, GPay"
-          enterKeyHint="next"
-        />
-      </label>
-      <TagSuggestions value={form.payment_method} tags={methods} onPick={(v) => set("payment_method", v)} label="Payment methods" />
+      {cards.length > 0 && (
+        <div className="field">
+          <span className="field-label">
+            Charged to a credit card <InfoButton topic="cardEstimate" />
+          </span>
+          <div className="chip-group" role="radiogroup" aria-label="Charged to a credit card">
+            {[{ id: null, name: "None" }, ...cards].map((c) => (
+              <button
+                type="button"
+                key={c.id ?? "none"}
+                role="radio"
+                aria-checked={form.card_id === c.id}
+                className={`chip ${form.card_id === c.id ? "is-active" : ""}`}
+                onClick={() => set("card_id", c.id)}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+          {card && <span className="field-hint">Adds to {card.name}&apos;s estimated bill on the Credit cards page.</span>}
+        </div>
+      )}
+
+      {!card && (
+        <>
+          <label className="field">
+            <span className="field-label">Payment method</span>
+            <input
+              className="input"
+              name="payment_method"
+              value={form.payment_method}
+              onChange={handleChange}
+              placeholder="e.g. HDFC credit card, GPay"
+              enterKeyHint="next"
+            />
+          </label>
+          <TagSuggestions value={form.payment_method} tags={methods} onPick={(v) => set("payment_method", v)} label="Payment methods" />
+        </>
+      )}
 
       <label className="field">
         <span className="field-label">Category</span>

@@ -1396,6 +1396,24 @@ button.tx-row:active {
   font-size: 12px;
 }
 
+/* "Estimated bill · October 2026 ⓘ   ₹848" under a card. */
+.cc-estimate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.cc-estimate-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
 /* Logged vs paid under each card: same card colour, told apart by fill
    (outlined = logged, filled = paid) so it reads without colour vision. */
 .cc-compare {
