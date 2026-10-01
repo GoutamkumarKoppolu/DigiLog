@@ -11,6 +11,7 @@ import { CATEGORY_PRESETS, byCategory, summarize, suggestions } from "./domain";
 import { askReminderPermission, reminderPermission, syncReminders } from "./reminders";
 import SubscriptionCard from "./SubscriptionCard";
 import SubscriptionForm from "./SubscriptionForm";
+import { fetchCreditCards } from "../cards";
 import CategoryBreakdown from "./CategoryBreakdown";
 
 const FORM_ID = "subscription-form";
@@ -33,6 +34,8 @@ export default function SubscriptionsPage({ navigate }) {
   const [showCancelled, setShowCancelled] = useState(false);
   const [sheet, setSheet] = useState(null); // null | { subscription? }
   const [permission, setPermission] = useState("unsupported");
+  // For "Charged to a credit card" in the form.
+  const [cards, setCards] = useState([]);
   const today = todayDate();
 
   const load = useCallback(
@@ -50,6 +53,7 @@ export default function SubscriptionsPage({ navigate }) {
   useEffect(() => {
     load();
     reminderPermission().then(setPermission).catch(() => {});
+    fetchCreditCards().then(setCards).catch(() => {});
   }, [load]);
 
   // Saves, then reschedules reminders (asking for permission the first time
@@ -243,6 +247,7 @@ export default function SubscriptionsPage({ navigate }) {
               CATEGORY_PRESETS
             )}
             remindersNote={REMINDER_NOTES[permission]}
+            cards={cards}
             onSubmit={handleSave}
           />
         </FormSheet>

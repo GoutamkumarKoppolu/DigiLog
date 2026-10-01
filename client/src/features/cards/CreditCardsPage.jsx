@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, CreditCard, Plus, Receipt, Trash2 } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
+import InfoButton from "../../components/ui/InfoButton";
 import BottomSheet from "../../components/ui/BottomSheet";
 import EmptyState from "../../components/ui/EmptyState";
 import ErrorBanner from "../../components/ui/ErrorBanner";
@@ -17,7 +18,7 @@ import {
   deleteCardTransaction,
 } from "./api";
 import { compareMonths, lastMonths, latestActiveMonth } from "./domain";
-import { currency, currentMonth, periodLabel, today } from "../../utils/format";
+import { currency, currentMonth, monthLabel, periodLabel, today } from "../../utils/format";
 
 const CHART_MONTHS = 6;
 
@@ -133,7 +134,19 @@ function AddSpendSheet({ card, onAdd, onClose, error }) {
   );
 }
 
-function CardSection({ card, index, months, compare, onChanged, onDeleteCard }) {
+// "Estimated bill · October ₹1,948 ⓘ" under a card, when something estimates it.
+function EstimateLine({ amount }) {
+  return (
+    <div className="card cc-estimate">
+      <span className="cc-estimate-label">
+        Estimated bill · {monthLabel(currentMonth())} <InfoButton topic="cardEstimate" />
+      </span>
+      <strong>{currency(amount)}</strong>
+    </div>
+  );
+}
+
+function CardSection({ card, index, months, compare, estimate, onChanged, onDeleteCard }) {
   const [transactions, setTransactions] = useState([]);
   const [chartMonth, setChartMonth] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -195,6 +208,8 @@ function CardSection({ card, index, months, compare, onChanged, onDeleteCard }) 
       </div>
 
       {!showAdd && <ErrorBanner message={error} onDismiss={() => setError("")} />}
+
+      {estimate > 0 && <EstimateLine amount={estimate} />}
 
       <CardCompareChart
         rows={compare}
@@ -261,14 +276,14 @@ function CardSection({ card, index, months, compare, onChanged, onDeleteCard }) 
 // Each card compares the two. Owns its own state, data loading and period.
 export default function CreditCardsPage({ navigate }) {
   const { transactions: ledgerVersion } = useLedger();
-  const [data, setData] = useState({ cards: [], spends: [], bills: new Map() });
+  const [data, setData] = useState({ cards: [], spends: [], bills: new Map(), estimates: new Map() });
   const [selectedMonths, setSelectedMonths] = useState(() => [currentMonth()]);
   const [showAddCard, setShowAddCard] = useState(false);
   const [showPeriod, setShowPeriod] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(() => {
-    fetchCardData()
+    fetchCardData(currentMonth())
       .then(setData)
       .catch((e) => setError(e.message));
   }, []);
@@ -346,6 +361,7 @@ export default function CreditCardsPage({ navigate }) {
               index={i}
               months={selectedMonths}
               compare={compareFor(card)}
+              estimate={data.estimates.get(card.id) || 0}
               onChanged={load}
               onDeleteCard={handleDeleteCard}
             />

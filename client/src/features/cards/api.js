@@ -20,15 +20,32 @@ export function fetchCreditCards() {
   return db.credit_cards.orderBy("created_at").toArray();
 }
 
-// Everything the page compares: every logged spend, and every bill paid from
-// Home (expenses tagged with a card's bill tag), by card.
-export async function fetchCardData() {
-  const [cards, spends, expenses] = await Promise.all([
+// Other features can estimate a card's bill for a month (e.g. Subscriptions
+// charged to it). A source is async (month) => Map card id → { amount }.
+const estimateSources = [];
+
+export function registerCardEstimateSource(source) {
+  estimateSources.push(source);
+}
+
+// Each card's estimated bill for `month`: Map card id → amount.
+async function fetchEstimates(month) {
+  const maps = await Promise.all(estimateSources.map((source) => source(month)));
+  const out = new Map();
+  maps.forEach((m) => m.forEach((e, cardId) => out.set(cardId, (out.get(cardId) || 0) + Number(e.amount))));
+  return out;
+}
+
+// Everything the page shows: every logged spend, every bill paid from Home
+// (expenses tagged with a card's bill tag), and this month's estimates.
+export async function fetchCardData(month) {
+  const [cards, spends, expenses, estimates] = await Promise.all([
     fetchCreditCards(),
     db.credit_card_transactions.toArray(),
     fetchTransactions({ kind: "expense" }),
+    fetchEstimates(month),
   ]);
-  return { cards, spends, bills: billsByCard(cards, expenses) };
+  return { cards, spends, bills: billsByCard(cards, expenses), estimates };
 }
 
 export async function createCreditCard(data) {

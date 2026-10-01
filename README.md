@@ -21,7 +21,7 @@ Everything stays on your phone: no account, no server, no ads, no SMS permission
 | **Borrowed & lent** | Who owes whom, paid back in parts. Each entry and payment moves money in or out of your **Balance** or a **Savings** pot, or is just noted. |
 | **Budgets** | A total for an event (wedding, new car) with optional sub-budgets and spends. A plan only: never touches the balance. |
 | **Bills** | Photos and PDFs of bills and warranties in folders; open or share them from the app. |
-| **Subscriptions** | Monthly and yearly costs, free trials, and phone reminders before each renewal. |
+| **Subscriptions** | Monthly and yearly costs, free trials, and phone reminders before each renewal. Charge one to a credit card and it shows in that card's **estimated bill** for the month. |
 | **Insights** | Report (donut by tag, change vs last month) and a Tags page across all time. Tap any chart to see its numbers. |
 | **Your data** | Backup and restore to one file (Save to phone, Share, or download). Themes: System / Light / Dark / Black × 6 accents. |
 

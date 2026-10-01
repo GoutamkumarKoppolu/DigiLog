@@ -218,8 +218,17 @@ describe("parseBackup: subscriptions", () => {
     trial_end: null,
     remind: "1",
     cancelled_at: null,
+    card_id: null,
     created_at: "2026-09-01T10:00:00.000Z",
   };
+
+  it("keeps the card a subscription is charged to, if that card is in the backup", () => {
+    const card = { id: 4, name: "HDFC Regalia", last4: null, created_at: "2026-09-01T10:00:00.000Z" };
+    const linked = parseBackup(backupWith({ credit_cards: [card], subscriptions: [{ ...s, card_id: 4 }] })).tables.subscriptions[0];
+    expect(linked.card_id).toBe(4);
+    expect(parseBackup(backupWith({ subscriptions: [{ ...s, card_id: 9 }] })).tables.subscriptions[0].card_id).toBeNull();
+    expect(parseBackup(backupWith({ subscriptions: [{ ...s, card_id: undefined }] })).tables.subscriptions[0].card_id).toBeNull();
+  });
 
   it("imports subscriptions", () => {
     const { tables } = parseBackup(backupWith({ subscriptions: [s] }));

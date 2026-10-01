@@ -273,7 +273,7 @@ export const TABLE_SPECS = {
     };
   },
   // Added in database v7. Subscriptions tracked by hand (not in the balance).
-  subscriptions: (r) => {
+  subscriptions: (r, ctx) => {
     const cycle = text(r.cycle);
     need(["monthly", "yearly"].includes(cycle), "cycle must be monthly or yearly");
     const day = Number(r.day);
@@ -293,6 +293,9 @@ export const TABLE_SPECS = {
       trial_end: r.trial_end ? date(r.trial_end) : null,
       remind: ["off", "0", "1", "3"].includes(remind) ? remind : "off",
       cancelled_at: r.cancelled_at ? date(r.cancelled_at) : null,
+      // Added later: the card it's charged to. Older backups, and cards not in
+      // this backup, mean none.
+      card_id: ctx.cardIds.has(Number(r.card_id)) ? Number(r.card_id) : null,
       created_at: createdAt(r.created_at),
     };
   },

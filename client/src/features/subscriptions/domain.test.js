@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   REMINDER_ID_BASE,
   byCategory,
+  cardEstimates,
+  chargesInMonth,
   dateFor,
   daysBetween,
   nextRenewal,
@@ -138,5 +140,41 @@ describe("reminders", () => {
 
   it("has nothing for cancelled subscriptions", () => {
     expect(upcomingReminders([sub({ cancelled_at: "2026-09-30" })], "2026-10-01T08:00")).toEqual([]);
+  });
+});
+
+describe("charged to a credit card", () => {
+  const sub = (extra = {}) => ({ id: 1, name: "Netflix", amount: 649, cycle: "monthly", day: 12, month: null, trial_end: null, cancelled_at: null, card_id: 7, ...extra });
+
+  it("charges a monthly subscription once a month, on its day (or the month's last)", () => {
+    expect(chargesInMonth(sub(), "2026-10")).toEqual(["2026-10-12"]);
+    expect(chargesInMonth(sub({ day: 31 }), "2026-09")).toEqual(["2026-09-30"]);
+  });
+
+  it("charges a yearly one only in its month", () => {
+    expect(chargesInMonth(sub({ cycle: "yearly", day: 3, month: 10 }), "2026-10")).toEqual(["2026-10-03"]);
+    expect(chargesInMonth(sub({ cycle: "yearly", day: 3, month: 11 }), "2026-10")).toEqual([]);
+  });
+
+  it("charges a trial only when it ends, and nothing once cancelled", () => {
+    expect(chargesInMonth(sub({ trial_end: "2026-10-20" }), "2026-10")).toEqual(["2026-10-20"]);
+    expect(chargesInMonth(sub({ trial_end: "2026-11-04" }), "2026-10")).toEqual([]);
+    expect(chargesInMonth(sub({ cancelled_at: "2026-09-01" }), "2026-10")).toEqual([]);
+  });
+
+  it("adds up each card's subscriptions for the month", () => {
+    const est = cardEstimates(
+      [
+        sub(),
+        sub({ id: 2, name: "Spotify", amount: 199, day: 20 }),
+        sub({ id: 3, name: "Prime", amount: 1499, cycle: "yearly", day: 3, month: 10, card_id: 8 }),
+        sub({ id: 4, name: "Not on a card", card_id: null }),
+        sub({ id: 5, name: "Next year", cycle: "yearly", day: 3, month: 5 }),
+      ],
+      "2026-10"
+    );
+    expect(est.get(7)).toEqual({ amount: 848, count: 2 });
+    expect(est.get(8)).toEqual({ amount: 1499, count: 1 });
+    expect(est.size).toBe(2);
   });
 });
