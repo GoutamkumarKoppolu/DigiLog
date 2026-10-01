@@ -46,9 +46,11 @@ function initialForm(transaction, seed) {
 // sheet with the amount typed so far. `tagGroups` are switches that swap the
 // Tag field for fixed tags, for one kind of type: { id, kind, label, info,
 // description, tags: [{ tag, label }] } (e.g. "Paying a credit card bill").
+// `tagHints` explain a tag that matters for one kind of type and offer it
+// first: { kind, tag, text, info } (e.g. "Salary" for earnings).
 export default function TransactionForm(props) {
   const { id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit, seed } = props;
-  const { extras = [], onPickExtra, tagGroups = [] } = props;
+  const { extras = [], onPickExtra, tagGroups = [], tagHints = [] } = props;
   const [form, setForm] = useState(() => initialForm(transaction, seed));
   // undefined until the switch is touched: follows the saved tag, since
   // groups may load after the form opens.
@@ -62,6 +64,8 @@ export default function TransactionForm(props) {
   const isSavingType = kind === "saving";
   const groups = tagGroups.filter((g) => g.kind === kind && g.tags.length);
   const group = groups.find((g) => g.id === groupId);
+  const hint = tagHints.find((h) => h.kind === kind);
+  const suggestedTags = hint ? [hint.tag, ...existingTags.filter((t) => !sameTag(t, hint.tag))] : existingTags;
 
   // A group's tag only fits with the switch on, a typed tag only with it off.
   function toggleGroup(g, on) {
@@ -167,7 +171,12 @@ export default function TransactionForm(props) {
               required
             />
           </label>
-          <TagSuggestions value={form.tag} tags={existingTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
+          <TagSuggestions value={form.tag} tags={suggestedTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
+          {hint && (
+            <p className="field-hint tag-hint">
+              {hint.text} {hint.info && <InfoButton topic={hint.info} />}
+            </p>
+          )}
         </>
       )}
 

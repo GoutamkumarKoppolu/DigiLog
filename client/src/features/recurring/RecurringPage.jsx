@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown, Plus, Repeat } from "lucide-react";
+import { ChevronDown, Info, Plus, Repeat } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import EmptyState from "../../components/ui/EmptyState";
 import ErrorBanner from "../../components/ui/ErrorBanner";
@@ -137,6 +137,14 @@ export default function RecurringPage() {
       <PageHeader title="Recurring" subtitle="Added when your salary comes in" info="recurring" />
       <div className="page-body">
         {!sheet && <ErrorBanner message={error} onDismiss={() => setError("")} />}
+
+        <p className="callout">
+          <Info size={16} aria-hidden="true" />
+          <span>
+            Recorded for you on their day, once you add the month&apos;s earning tagged <strong>Salary</strong>. Don&apos;t add them on Home
+            yourself, even if you pay by hand.
+          </span>
+        </p>
 
         {entries.length > 0 && (
           <div className="card savings-summary">

@@ -18,7 +18,9 @@ function activeFilterLabels(filters) {
   return [...labels, ...filters.tags];
 }
 
-export default function HomePage({ navigate, onOpenTransaction }) {
+// `BalanceNote` (from App's ROUTES) is shown under the current balance, e.g.
+// the usable balance from Recurring.
+export default function HomePage({ navigate, onOpenTransaction, BalanceNote }) {
   const ledger = useLedger();
   const [showFilters, setShowFilters] = useState(false);
   const { earnings, expenses, savings } = computeTotals(ledger.transactions);
@@ -35,6 +37,7 @@ export default function HomePage({ navigate, onOpenTransaction }) {
         <div className="hero-balance">
           <span className="hero-label">Current balance</span>
           <Money value={ledger.overview.balance} className="hero-amount" />
+          {BalanceNote && <BalanceNote navigate={navigate} />}
           <span className="hero-pill">
             <PiggyBank size={14} /> Overall savings {currency(ledger.overview.totalSavings)}
           </span>

@@ -16,7 +16,7 @@ Everything stays on your phone: no account, no server, no ads, no SMS permission
 |---|---|
 | **Transactions** | Earnings, expenses and savings with tags, notes, payment method and source. Filter by months, type and tag. |
 | **Savings pots** | Savings grouped by tag. Each saving says whether it came from your balance; **Use savings** takes from a pot, never below zero. |
-| **Recurring** | EMIs, rent and SIPs added automatically on their day once the month's **Salary** is in; pending balances count down to zero. |
+| **Recurring** | EMIs, rent and SIPs added automatically on their day once the month's **Salary** is in (tag your pay exactly "Salary"); pending balances count down to zero. Home shows your **usable balance**, with the month at a glance. |
 | **Credit cards** | Log what you buy on each card, pay the bill as an expense ("Paying a credit card bill"), and see logged vs paid per card, month by month. |
 | **Borrowed & lent** | Who owes whom, paid back in parts. Each entry and payment moves money in or out of your **Balance** or a **Savings** pot, or is just noted. |
 | **Budgets** | A total for an event (wedding, new car) with optional sub-budgets and spends. A plan only: never touches the balance. |
@@ -32,6 +32,8 @@ Everything stays on your phone: no account, no server, no ads, no SMS permission
 | **Current balance** | earnings − expenses − savings from balance ± borrowed & lent linked to the balance |
 | **Overall savings** | savings − savings used ± borrowed & lent linked to savings |
 | **Pot remaining** | saved into the pot − used from it (never below zero) |
+| **Usable balance** | current balance − this month's recurring payments still to be deducted (ones waiting for the salary come out of it) |
+| **Usable salary** | salary − this month's recurring payments |
 | **Card bill month** | a bill paid on or after the 25th is for that month; before the 25th, for the previous month |
 
 Budgets, subscriptions and logged card spends are tracking only and never change the balance.

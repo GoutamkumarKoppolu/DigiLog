@@ -11,8 +11,10 @@ const FORM_ID = "transaction-form";
 // Add (transaction = null) or edit/delete a ledger transaction. When adding,
 // `entries` from other features show as extra Type chips (e.g. Repay); each
 // renders its own form: { id, label, render({ formId, amount, kindChips,
-// onDone, onError }) }. `tagGroups` go to TransactionForm (e.g. card bills).
-export default function TransactionSheet({ transaction, entries = [], tagGroups = [], onClose }) {
+// onDone, onError }) }. `tagGroups` / `tagHints` go to TransactionForm.
+// `onSaved(row, { created })` gets the saved transaction (with `type_kind`)
+// after the sheet closes, e.g. to follow a new salary with its summary.
+export default function TransactionSheet({ transaction, entries = [], tagGroups = [], tagHints = [], onSaved, onClose }) {
   const { options, tags, error, setError, saveTransaction, removeTransaction, refresh } = useLedger();
   // Which chip is picked; the amount is carried over when switching.
   const [mode, setMode] = useState({ extra: null, type: "", amount: "" });
@@ -31,7 +33,10 @@ export default function TransactionSheet({ transaction, entries = [], tagGroups 
   }
 
   async function handleSubmit(data) {
-    if (await saveTransaction(data, transaction?.id)) onClose();
+    if (!(await saveTransaction(data, transaction?.id))) return;
+    onClose();
+    const kind = options["transaction-types"].find((t) => t.name === data.type)?.kind ?? null;
+    onSaved?.({ ...data, type_kind: kind }, { created: !transaction });
   }
 
   async function handleDelete() {
@@ -93,6 +98,7 @@ export default function TransactionSheet({ transaction, entries = [], tagGroups 
           seed={mode}
           extras={extras}
           tagGroups={tagGroups}
+          tagHints={tagHints}
           onPickExtra={(extra, amount) => switchTo({ extra, type: "", amount })}
         />
       )}
