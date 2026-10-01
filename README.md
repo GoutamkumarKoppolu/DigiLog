@@ -3,6 +3,8 @@
 A private, offline money tracker for Android and the web, built for one-handed use.
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
+**[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/expense-tracker/releases/latest/download/expense-tracker.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/expense-tracker/releases)
+
 <p align="center">
   <img src="docs/screenshots/home.png" width="200" alt="Home: current balance, monthly income, expenses and savings, and transactions" />
   <img src="docs/screenshots/report.png" width="200" alt="Report: donut chart of expenses by tag" />
@@ -40,11 +42,11 @@ Budgets, subscriptions and logged card spends are tracking only and never change
 
 ## Install on Android
 
-1. GitHub → **Actions → Build Android APK → Run workflow**.
-2. Download the `app-debug-apk` artifact and open `app-debug.apk` on your phone.
+1. On your phone, tap **[Download the APK](https://github.com/GoutamkumarKoppolu/expense-tracker/releases/latest/download/expense-tracker.apk)**.
+2. Open the downloaded file. If Android asks, allow your browser or Files app to **install unknown apps**.
+3. If Play Protect warns that the app is unknown, tap **More details → Install anyway** (it's not on the Play Store, see the FAQ).
 
-It's an unsigned debug build: fine for your own phone, not for the Play Store.
-Before reinstalling or changing phones, use **More → Backup & restore → Save to phone** (it goes to *Documents › Expense Tracker*).
+To update, download and install the new APK over the old one: your data stays.
 
 ## Run locally
 
@@ -66,6 +68,38 @@ For the Android project locally (needs Android Studio): `npm run cap:sync && npx
 React 19 · Vite 8 · Dexie 4 (IndexedDB) · Capacitor 7 · plain CSS · Vitest. Each feature lives in `client/src/features/<name>/`. See [CLAUDE.md](CLAUDE.md) for the architecture and the rules for adding features.
 
 `server/` is a legacy Express + PostgreSQL API kept for reference only; the app doesn't use it.
+
+## FAQ
+
+**Is it free? Are there ads?**
+Free, no ads, no account, no in-app purchases.
+
+**Where is my data? Can anyone else see it?**
+Only on your phone, in the app's own storage. Nothing is sent anywhere, and the app works fully offline.
+
+**Will I lose my data if I uninstall or change phones?**
+Uninstalling deletes the app's data. Before that, go to **More → Backup & restore → Save to phone** (it's kept in *Documents › Expense Tracker*) or **Share** it to Drive. On the new install, **Import** that file. Updating to a new version keeps your data.
+
+**Why does Android say the app is unknown or unsafe?**
+It's installed from GitHub, not the Play Store, so Play Protect doesn't know it. The code is all here, and each APK is built by GitHub Actions from this repository.
+
+**Is there an iPhone app?**
+Not yet. It's Android only for now.
+
+**My EMIs and rent aren't being deducted. Why?**
+Recurring payments wait for that month's salary: add it as an **earning tagged exactly "Salary"**. They're then added on their day automatically, so don't add them yourself, even if you pay one by hand.
+
+**What's "Usable" under my balance?**
+Your current balance minus this month's recurring payments still to come. Tap **See breakup** for the month at a glance.
+
+**Do subscriptions reduce my balance?**
+No, they're tracking and reminders only. If one is charged to a credit card, it shows in that card's **estimated bill**, and the money leaves your balance when you pay the card bill.
+
+**How do I record a credit card bill?**
+Add an expense, turn on **Paying a credit card bill** and pick the card. Log what you buy on the card on the Credit cards page, and each card shows logged vs paid, month by month.
+
+**I borrowed money from a friend. Where does it go?**
+**More → Borrowed & lent.** Pick whether it went into your Balance or Savings (or just note it), and add each repayment as you make it.
 
 ## Not there yet
 
