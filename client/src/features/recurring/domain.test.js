@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dueDate, duePayments, firstMonth, lastPaymentMonth, monthStatus, monthTotals, progress, salaryMonths } from "./domain";
+import { dueDate, duePayments, firstMonth, lastPaymentMonth, monthPlan, monthStatus, monthTotals, progress, salaryMonths } from "./domain";
 
 const salary = (date, id = 900) => ({ id, type_kind: "earning", tag: "Salary", amount: 85000, date });
 const emi = (extra = {}) => ({
@@ -145,5 +145,51 @@ describe("this month's status", () => {
         { state: "paused" },
       ])
     ).toEqual({ deducted: 25000, upcoming: 13500.5 });
+  });
+});
+
+describe("monthPlan", () => {
+  // EMI ₹32,500 on the 5th, rent ₹5,000 on the 10th, SIP ₹5,000 on the 28th.
+  const items = [
+    emi({ amount: 32500, start_month: "2026-10" }),
+    emi({ id: 2, name: "Rent", amount: 5000, day: 10, start_month: "2026-10" }),
+    emi({ id: 3, name: "SIP", kind: "saving", deduct_from_balance: true, amount: 5000, day: 28, start_month: "2026-10" }),
+  ];
+  const pay = (month, id, recurringId) => run(month, id, recurringId);
+
+  it("before the salary: payments wait for it and don't touch usable balance", () => {
+    const plan = monthPlan(items, [], [], 18000, "2026-10-01");
+    expect(plan).toMatchObject({ salary: null, usableSalary: null, total: 42500, stillToDeduct: 0, waitingForSalary: 42500, usableBalance: 18000 });
+    expect(plan.rows.map((r) => [r.name, r.state])).toEqual([
+      ["Home loan EMI", "waiting"],
+      ["Rent", "waiting"],
+      ["SIP", "waiting"],
+    ]);
+  });
+
+  it("salary added: everything still to come is taken off the balance", () => {
+    const plan = monthPlan(items, [], [salary("2026-10-03", 900)], 98000, "2026-10-03");
+    expect(plan).toMatchObject({ salary: 85000, total: 42500, usableSalary: 42500, stillToDeduct: 42500, usableBalance: 55500 });
+  });
+
+  it("after the EMI is deducted, usable balance holds steady", () => {
+    const txs = [salary("2026-10-03", 900), tx(10, 32500, "2026-10-05")];
+    const plan = monthPlan(items, [pay("2026-10", 10, 1)], txs, 65500, "2026-10-06");
+    expect(plan).toMatchObject({ stillToDeduct: 10000, usableBalance: 55500, total: 42500 });
+    expect(plan.rows.map((r) => [r.name, r.state])).toEqual([
+      ["Rent", "due"],
+      ["SIP", "due"],
+      ["Home loan EMI", "deducted"],
+    ]);
+  });
+
+  it("leaves out savings not from the balance, and skipped, paused or later payments", () => {
+    const more = [
+      emi({ id: 4, name: "Gift SIP", kind: "saving", deduct_from_balance: false, start_month: "2026-10" }),
+      emi({ id: 5, name: "Paused", paused: true, start_month: "2026-10" }),
+      emi({ id: 6, name: "Skipped", skipped_months: ["2026-10"], start_month: "2026-10" }),
+      emi({ id: 7, name: "Later", start_month: "2026-12" }),
+    ];
+    expect(monthPlan(more, [], [], 1000, "2026-10-01").rows).toEqual([]);
   });
 });

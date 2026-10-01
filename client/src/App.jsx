@@ -18,16 +18,17 @@ import BackupPage from "./features/backup/BackupPage";
 import { BudgetsPage } from "./features/budgets";
 import { BillsPage } from "./features/bills";
 import { BorrowingPage, useBorrowEntries } from "./features/borrowing";
-import { RecurringEngine, RecurringPage } from "./features/recurring";
+import { MonthPlanSheet, RecurringEngine, RecurringPage, SALARY_HINT, UsableBalance, isSalary } from "./features/recurring";
 import { SubscriptionReminders, SubscriptionsPage } from "./features/subscriptions";
 
 // Page registry. `tab` is the bottom-nav tab that stays highlighted; `add`
 // shows the + (add transaction) button; `hero` means the page starts with
 // the colored balance header (status bar is tinted to match); `parent` is
-// where the Android Back button goes (none on Home: Back leaves the app).
+// where the Android Back button goes (none on Home: Back leaves the app);
+// `props` are extra props for the page (e.g. what other features show on it).
 // Add a page here, nowhere else.
 const ROUTES = {
-  home: { page: HomePage, tab: "home", add: true, hero: true },
+  home: { page: HomePage, tab: "home", add: true, hero: true, props: { BalanceNote: UsableBalance } },
   recurring: { page: RecurringPage, tab: "recurring", add: true, parent: "home" },
   report: { page: ReportPage, tab: "more", add: true, parent: "more" },
   savings: { page: SavingsPage, tab: "savings", add: true, parent: "home" },
@@ -50,11 +51,11 @@ const TABS = [
   { id: "more", label: "More", icon: LayoutGrid },
 ];
 
-// The + sheet with what other features add to it: Repay / Received chips and
-// the "Paying a credit card bill" switch. A component of its own because
-// those read the ledger, which App provides.
+// The + sheet with what other features add to it: Repay / Received chips,
+// the "Paying a credit card bill" switch and the Salary tag hint. A component
+// of its own because those read the ledger, which App provides.
 function AddSheet(props) {
-  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} />;
+  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} tagHints={[SALARY_HINT]} />;
 }
 
 export default function App() {
@@ -62,7 +63,9 @@ export default function App() {
   useBackButton(ROUTES, route, param, navigate);
   // null = closed, { transaction: null } = add, { transaction } = edit
   const [sheet, setSheet] = useState(null);
-  const { page: Page, tab, add, hero = false } = ROUTES[route];
+  // "<Month> at glance", shown right after a salary is added.
+  const [showPlan, setShowPlan] = useState(false);
+  const { page: Page, tab, add, hero = false, props: pageProps } = ROUTES[route];
   useSystemBars(hero);
 
   return (
@@ -71,7 +74,7 @@ export default function App() {
       <SubscriptionReminders />
       <div className="app">
         <main className="app-main">
-          <Page navigate={navigate} param={param} onOpenTransaction={(transaction) => setSheet({ transaction })} />
+          <Page navigate={navigate} param={param} onOpenTransaction={(transaction) => setSheet({ transaction })} {...pageProps} />
         </main>
         <BottomNav
           tabs={TABS}
@@ -79,7 +82,14 @@ export default function App() {
           onNavigate={navigate}
           onAdd={add ? () => setSheet({ transaction: null }) : null}
         />
-        {sheet && <AddSheet transaction={sheet.transaction} onClose={() => setSheet(null)} />}
+        {sheet && (
+          <AddSheet
+            transaction={sheet.transaction}
+            onClose={() => setSheet(null)}
+            onSaved={(row, { created }) => created && isSalary(row) && setShowPlan(true)}
+          />
+        )}
+        {showPlan && <MonthPlanSheet salaryAdded onClose={() => setShowPlan(false)} onOpenRecurring={() => navigate("recurring")} />}
       </div>
     </LedgerProvider>
   );

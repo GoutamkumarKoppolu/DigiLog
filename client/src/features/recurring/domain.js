@@ -12,6 +12,15 @@ const toPaise = (n) => Math.round(Number(n) * 100);
 const fromPaise = (p) => p / 100;
 const pad2 = (n) => String(n).padStart(2, "0");
 
+// Shown under the Tag field when adding an earning (see TransactionForm
+// tagHints): the salary must carry this tag for payments to be deducted.
+export const SALARY_HINT = {
+  kind: "earning",
+  tag: "Salary",
+  text: "Is this your salary? Tag it \"Salary\". Recurring payments (EMIs, rent, SIPs) are only deducted once it's added.",
+  info: "salary",
+};
+
 export const isSalary = (t) => t.type_kind === "earning" && String(t.tag).trim().toLowerCase() === SALARY_TAG;
 
 // Months ("YYYY-MM") in which a Salary earning has been added.
@@ -129,4 +138,48 @@ export function monthTotals(statuses) {
     { deducted: 0, upcoming: 0 }
   );
   return { deducted: fromPaise(t.deducted), upcoming: fromPaise(t.upcoming) };
+}
+
+// ---------- this month at a glance ----------
+
+const PLAN_STATES = ["due", "waiting", "deducted"];
+// Upcoming first (they're what's still to come), then what's been paid.
+const PLAN_ORDER = { due: 0, waiting: 0, deducted: 1 };
+
+// The month's salary, every recurring payment that comes out of the balance
+// this month, and what's usable:
+//   usable salary  = salary − all of this month's payments (paid or not)
+//   usable balance = balance − payments still to be deducted
+// Payments waiting for the salary aren't taken off the balance: they come out
+// of the salary when it's added. Savings that don't come from the balance
+// are left out, since they never reduce it.
+export function monthPlan(items, runs, transactions, balance, today) {
+  const month = today.slice(0, 7);
+  const txById = new Map(transactions.map((t) => [t.id, t]));
+  const salarySet = salaryMonths(transactions);
+  const salaries = transactions.filter((t) => isSalary(t) && t.date.slice(0, 7) === month);
+
+  const rows = items
+    .filter((item) => item.kind !== "saving" || item.deduct_from_balance !== false)
+    .map((item) => ({ item, status: monthStatus(item, progress(item, runs, txById), salarySet, today) }))
+    .filter(({ status }) => PLAN_STATES.includes(status.state))
+    .map(({ item, status }) => ({ id: item.id, name: item.name, kind: item.kind, amount: Number(status.amount), date: status.date, state: status.state }))
+    .sort((a, b) => PLAN_ORDER[a.state] - PLAN_ORDER[b.state] || a.date.localeCompare(b.date));
+
+  const sum = (states) => rows.reduce((s, r) => s + (states.includes(r.state) ? toPaise(r.amount) : 0), 0);
+  const total = sum(PLAN_STATES);
+  const stillToDeduct = sum(["due"]);
+  const salary = salaries.length ? salaries.reduce((s, t) => s + toPaise(t.amount), 0) : null;
+
+  return {
+    month,
+    rows,
+    salary: salary == null ? null : fromPaise(salary),
+    total: fromPaise(total),
+    stillToDeduct: fromPaise(stillToDeduct),
+    waitingForSalary: fromPaise(sum(["waiting"])),
+    usableSalary: salary == null ? null : fromPaise(salary - total),
+    balance,
+    usableBalance: fromPaise(toPaise(balance) - stillToDeduct),
+  };
 }
