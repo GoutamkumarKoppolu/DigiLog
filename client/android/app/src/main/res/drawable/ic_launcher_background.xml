@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- DigiLog app icon background: the brand green gradient (--brand-from to
-     --brand-to in src/index.css). -->
+<!-- DigiLog app icon background: the brand green gradient (brand-from to
+     brand-to in src/index.css). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"

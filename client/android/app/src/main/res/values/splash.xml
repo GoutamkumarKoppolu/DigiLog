@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Android's own launch screen (before the web app loads): the brand
-         green (--brand-to in src/index.css), so it flows into DigiLog's
+         green (brand-to in src/index.css), so it flows into DigiLog's
          splash (src/app/Splash.jsx). -->
     <color name="splash_background">#0F6B33</color>
 </resources>
