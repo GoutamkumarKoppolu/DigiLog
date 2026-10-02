@@ -1,6 +1,10 @@
 /* Design tokens + base element styles. Every color in the app comes from a
    token here so light and dark mode stay in sync. */
 :root {
+  /* DigiLog brand green: the app icon, launch screens and logo. Fixed, not
+     part of the accent palettes, so it looks the same in every theme. */
+  --brand-from: #34b369;
+  --brand-to: #0f6b33;
   --bg: #f3f2f8;
   --surface: #ffffff;
   --surface-2: #f6f5fb;

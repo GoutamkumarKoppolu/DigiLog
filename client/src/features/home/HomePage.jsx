@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, PiggyBank, SlidersHorizontal, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, PiggyBank, SlidersHorizontal } from "lucide-react";
 import Money from "../../components/ui/Money";
+import AppMark from "../../components/ui/AppMark";
 import StatCard from "../../components/ui/StatCard";
 import ErrorBanner from "../../components/ui/ErrorBanner";
 import { TransactionList, useLedger } from "../ledger";
@@ -31,7 +32,7 @@ export default function HomePage({ navigate, onOpenTransaction, BalanceNote }) {
       <section className="hero">
         <div className="hero-top">
           <span className="hero-brand">
-            <Wallet size={18} /> DigiLog
+            <AppMark size={18} /> DigiLog
           </span>
         </div>
         <div className="hero-balance">
