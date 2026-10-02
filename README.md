@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/icon.png" width="96" alt="DigiLog icon: a green rounded square with a white D made of ledger lines" /></p>
+<p align="center"><img src="docs/icon.png" width="96" alt="DigiLog icon: a white rupee sign leaving a trail of dots, on a green rounded square" /></p>
 
 # DigiLog
 
