@@ -34,9 +34,9 @@ async function writeChunks(path, chunks, encoding, directory = Directory.Cache) 
 }
 
 // Folder inside the phone's Documents where backups are saved.
-export const DEVICE_FOLDER = "Expense Tracker";
+export const DEVICE_FOLDER = "DigiLog";
 
-// Saves a text file into Documents/Expense Tracker on the phone, where the
+// Saves a text file into Documents/DigiLog on the phone, where the
 // Files app (and the Import button's picker) can find it. Android 10 and
 // older ask for storage permission first; newer versions don't need it for
 // files the app creates. Resolves to the path to show the user.

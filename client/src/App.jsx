@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { House, LayoutGrid, PiggyBank, Repeat } from "lucide-react";
 import "./App.css";
 import BottomNav from "./app/BottomNav";
+import Splash from "./app/Splash";
 import { useHashRoute } from "./app/useHashRoute";
 import { useBackButton } from "./app/useBackButton";
 import { useSystemBars } from "./app/useSystemBars";
@@ -65,8 +66,12 @@ export default function App() {
   const [sheet, setSheet] = useState(null);
   // "<Month> at glance", shown right after a salary is added.
   const [showPlan, setShowPlan] = useState(false);
+  // The launch screen, once per app start.
+  const [splash, setSplash] = useState(true);
+  const hideSplash = useCallback(() => setSplash(false), []);
   const { page: Page, tab, add, hero = false, props: pageProps } = ROUTES[route];
-  useSystemBars(hero);
+  // The splash is the hero colour, so tint the system bars to match it.
+  useSystemBars(hero || splash);
 
   return (
     <LedgerProvider>
@@ -89,6 +94,7 @@ export default function App() {
             onSaved={(row, { created }) => created && isSalary(row) && setShowPlan(true)}
           />
         )}
+        {splash && <Splash onDone={hideSplash} />}
         {showPlan && <MonthPlanSheet salaryAdded onClose={() => setShowPlan(false)} onOpenRecurring={() => navigate("recurring")} />}
       </div>
     </LedgerProvider>

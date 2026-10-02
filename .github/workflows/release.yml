@@ -2,7 +2,7 @@ name: Release Android app
 
 # Push a tag like v1.2.0 (or run it by hand with a version) to build a signed
 # APK and publish it as a GitHub Release. The README's Download link always
-# points at the latest one: releases/latest/download/expense-tracker.apk
+# points at the latest one: releases/latest/download/digilog.apk
 #
 # Needs these repository secrets (Settings → Secrets and variables → Actions):
 #   ANDROID_KEYSTORE_BASE64    the release keystore (.jks), base64-encoded
@@ -81,7 +81,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
           chmod +x ./gradlew
           ./gradlew assembleRelease
-          cp app/build/outputs/apk/release/app-release.apk "${{ runner.temp }}/expense-tracker.apk"
+          cp app/build/outputs/apk/release/app-release.apk "${{ runner.temp }}/digilog.apk"
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
@@ -89,4 +89,4 @@ jobs:
           tag_name: v${{ env.VERSION_NAME }}
           name: v${{ env.VERSION_NAME }}
           generate_release_notes: true
-          files: ${{ runner.temp }}/expense-tracker.apk
+          files: ${{ runner.temp }}/digilog.apk

@@ -2699,3 +2699,60 @@ button.list-row:active {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Launch screen (app/Splash.jsx) ---------- */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+  background: linear-gradient(160deg, var(--hero-from), var(--hero-to));
+  color: var(--on-hero);
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+.splash.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: splash-in 0.6s ease both;
+}
+
+.splash-name {
+  margin: 0;
+  color: inherit;
+  font-size: clamp(40px, 13vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.splash-tagline {
+  margin: 0;
+  font-size: 17px;
+  opacity: 0.9;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash,
+  .splash-content {
+    animation: none;
+    transition: none;
+  }
+}

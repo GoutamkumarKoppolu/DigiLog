@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android's own launch screen (before the web app loads): the default
+         Purple theme's hero colour, so it flows into DigiLog's splash
+         (src/app/Splash.jsx) instead of flashing Capacitor's logo. -->
+    <color name="splash_background">#6D48EF</color>
+</resources>
