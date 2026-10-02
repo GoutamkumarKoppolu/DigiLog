@@ -197,7 +197,7 @@ Conventions in the data layer:
 - Filtering loads whole tables and filters in memory. That's fine at personal scale, but use Dexie indexes if data grows.
 - Schema changes need a **new `db.version(n)`**, not an edit to an existing version. Editing one breaks existing installs, including users' phones.
 - Savings pots are keyed by tag name, and withdrawals store the tag string, so renames rely on the savings guard.
-- Unit tests cover only pure rules (ledger movements, savings pots, credit card bills, budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. UI checks are done manually or with a throwaway Playwright script.
+- Unit tests cover only pure rules (ledger movements, savings pots, credit card bills, budgets, bills, borrowing, recurring and subscriptions domain, Back-button targets, backup format). Native plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are only compiled by the Android CI build, so check that build after touching them. Android's resource parser is stricter than browsers (e.g. no `--` inside XML comments, so don't name CSS variables there); `src/androidResources.test.js` catches that before CI. UI checks are done manually or with a throwaway Playwright script.
 
 ## Rules for building new features
 
