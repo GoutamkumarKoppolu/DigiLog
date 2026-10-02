@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-**DigiLog** ("Track to the tail"; repo TrackMyBills, internal id `com.goutam.expensetracker`, never change it or updates stop installing) is a personal money tracker that runs **fully offline, on-device**. It's a React (Vite) single-page app that stores everything in IndexedDB via Dexie, and it's also packaged as an Android app with Capacitor. There is **no backend in use**. `server/` is a legacy Express + Postgres API kept only for reference. Don't add features to it or make the client depend on it.
+**DigiLog** ("Track to the tail"; repo GoutamkumarKoppolu/DigiLog, internal id `com.goutam.expensetracker`, never change it or updates stop installing) is a personal money tracker that runs **fully offline, on-device**. It's a React (Vite) single-page app that stores everything in IndexedDB via Dexie, and it's also packaged as an Android app with Capacitor. There is **no backend in use**. `server/` is a legacy Express + Postgres API kept only for reference. Don't add features to it or make the client depend on it.
 
 Stack: React 19, Vite 8, Dexie 4, Capacitor 7 (Android), oxlint. Plain JavaScript/JSX (no TypeScript), plain CSS (no UI framework, no router, no state library). Unit tests use Vitest and cover the pure rules (`*.test.js` next to the code).
 

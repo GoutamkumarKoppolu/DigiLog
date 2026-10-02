@@ -5,9 +5,9 @@
 A private, offline money tracker for Android and the web, built for one-handed use.
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
-[![Downloads](https://img.shields.io/github/downloads/GoutamkumarKoppolu/TrackMyBills/total?label=downloads&color=6d48ef)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
+[![Downloads](https://img.shields.io/github/downloads/GoutamkumarKoppolu/DigiLog/total?label=downloads&color=6d48ef)](https://github.com/GoutamkumarKoppolu/DigiLog/releases)
 
-**[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
+**[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/DigiLog/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/DigiLog/releases)
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="200" alt="Home: current balance, monthly income, expenses and savings, and transactions" />
@@ -46,7 +46,7 @@ Budgets, subscriptions and logged card spends are tracking only and never change
 
 ## Install on Android
 
-1. On your phone, tap **[Download the APK](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/digilog.apk)**.
+1. On your phone, tap **[Download the APK](https://github.com/GoutamkumarKoppolu/DigiLog/releases/latest/download/digilog.apk)**.
 2. Open the downloaded file. If Android asks, allow your browser or Files app to **install unknown apps**.
 3. If Play Protect warns that the app is unknown, tap **More details → Install anyway** (it's not on the Play Store, see the FAQ).
 
