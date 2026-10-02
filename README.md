@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/icon.png" width="96" alt="DigiLog icon: a green rounded square with a white D made of ledger lines" /></p>
+
 # DigiLog
 
 *Track to the tail.*

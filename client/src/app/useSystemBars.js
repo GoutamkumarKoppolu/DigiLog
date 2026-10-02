@@ -11,19 +11,20 @@ const token = (name) => getComputedStyle(document.documentElement).getPropertyVa
 // Paints the Android status bar area to match the top of the current page
 // (the balance hero on Home, the page background elsewhere) and the
 // navigation bar area to match the bottom nav, with readable icons.
-export function useSystemBars(heroOnTop) {
+// `brandOnTop`: the launch screen is showing, so the status bar is brand green.
+export function useSystemBars(heroOnTop, brandOnTop = false) {
   const { theme, mode } = useTheme();
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const light = mode === "light";
     SystemBars.setColors({
-      top: heroOnTop ? token("--hero-from") : token("--bg"),
+      top: brandOnTop ? token("--brand-from") : heroOnTop ? token("--hero-from") : token("--bg"),
       bottom: token("--surface"),
-      topDarkIcons: !heroOnTop && light,
+      topDarkIcons: !brandOnTop && !heroOnTop && light,
       bottomDarkIcons: light,
     }).catch(() => {
       // Cosmetic only; never break the app over bar colors.
     });
-  }, [heroOnTop, theme, mode]);
+  }, [heroOnTop, brandOnTop, theme, mode]);
 }

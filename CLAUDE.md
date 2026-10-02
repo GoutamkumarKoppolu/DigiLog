@@ -56,7 +56,7 @@ client/src/
                            SegmentedControl, ChipGroup, Switch, StatCard, ProgressRing, DonutChart,
                            Money, ListRow, EmptyState, ErrorBanner, InfoButton (ⓘ → help sheet),
                            FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob),
-                           TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions"),
+                           AppMark (the DigiLog "Ledger D" logo; `tile` = the app icon), TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions"),
                            ChartTip (tap a chart column → what each mark is and its value)
     MonthPicker.jsx        Years × months chip picker ("YYYY-MM"[] contract)
     PeriodSheet.jsx        MonthPicker in a bottom sheet
@@ -175,6 +175,7 @@ Conventions in the data layer:
 - **No browser suggestions.** Android shows `<datalist>` options and autofill history as chips in the keyboard's suggestion strip (a real bug: old tags appeared while typing a name). So: never use `<datalist>` or `list=`; every `<form>` gets `autoComplete="off"`, and so does any input outside a form (search boxes). For tag suggestions use `components/ui/TagSuggestions.jsx` (in-app chips). `MainActivity` also opts the WebView out of Android autofill. `src/uiRules.test.js` fails the tests if any of this is broken.
 - **Cards and rows, not wide tables.** Only the utilization table remains, inside `.table-scroll`. Test at 360, 390 and 412px widths: there must be no horizontal page scroll.
 - **Charts are tappable.** On a phone there's no hover, so tapping a bar column shows a `ChartTip` (label + value per mark, tap again to hide) and tapping a donut slice shows it in the hole (`DonutChart` `selected` / `onSelect`). New charts should do the same.
+- **Brand:** the app icon is the "Ledger D" (a D with three entry lines cut out, one even-odd path) on brand green `--brand-from` / `--brand-to` (index.css, the same in every theme; not an accent). The same path is in `components/ui/AppMark.jsx` and Android's `drawable/ic_digilog_foreground.xml` (adaptive icon foreground + monochrome layer; background `drawable/ic_launcher_background.xml`; legacy PNG mipmaps, `public/favicon.svg` and `docs/icon.png` are rendered from it). Change the logo in all of them together. Both launch screens are brand green.
 - **Colors only from tokens**, never hard-coded. Neutrals/semantic colors live in `index.css` (light on `:root`, dark on `:root[data-theme="dark"]`). Anything brand-coloured uses the accent tokens (`--accent`, `--accent-soft`, `--on-accent`, `--hero-from/-to`) from `theme/palettes.css`, so it follows the user's chosen accent. Charts use `--cat-1..8` in fixed order.
 - **Theme is per device display state** (localStorage via `theme/themeStore.js`), not ledger data, so it doesn't go in IndexedDB. Dark mode is driven by `data-theme` set in JS, not by a `prefers-color-scheme` media query.
 - **Adding a palette:** add a light block and a dark block to `theme/palettes.css`, and an entry to `ACCENTS` in `theme/palettes.js`. Keep `--on-accent` on `--accent` and `--accent` on `--accent-soft` at ≥ 4.5:1 contrast.

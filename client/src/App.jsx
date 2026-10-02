@@ -70,8 +70,8 @@ export default function App() {
   const [splash, setSplash] = useState(true);
   const hideSplash = useCallback(() => setSplash(false), []);
   const { page: Page, tab, add, hero = false, props: pageProps } = ROUTES[route];
-  // The splash is the hero colour, so tint the system bars to match it.
-  useSystemBars(hero || splash);
+  // The splash is brand green, so tint the status bar to match while it shows.
+  useSystemBars(hero, splash);
 
   return (
     <LedgerProvider>
