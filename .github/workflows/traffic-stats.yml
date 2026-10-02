@@ -1,0 +1,65 @@
+name: Save traffic stats
+
+# Once a day, saves the repo's traffic (views, unique visitors, clones,
+# referrers, popular pages) and the APK download counts to the `stats`
+# branch as CSV files. GitHub only keeps traffic for 14 days; this keeps it
+# all. Free on a public repo (about 20 seconds a day).
+#
+# Needs a repository secret TRAFFIC_TOKEN: a fine-grained personal access
+# token for this repo with "Administration: Read-only" (the traffic API
+# requires it; the built-in GITHUB_TOKEN can't read traffic).
+
+on:
+  schedule:
+    - cron: "30 18 * * *" # daily, 00:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  save:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the script from main
+        uses: actions/checkout@v4
+        with:
+          path: code
+          sparse-checkout: .github/scripts
+
+      - name: Check out the stats branch (created on the first run)
+        run: |
+          git clone --quiet "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" stats
+          cd stats
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin stats >/dev/null; then
+            git checkout --quiet stats
+          else
+            git checkout --quiet --orphan stats
+            git rm -rf --quiet . || true
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Save today's numbers
+        working-directory: stats
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Add the TRAFFIC_TOKEN secret first (see the top of traffic-stats.yml)."
+            exit 1
+          fi
+          node ../code/.github/scripts/traffic-stats.mjs
+
+      - name: Commit and push
+        working-directory: stats
+        run: |
+          git add -A
+          git diff --cached --quiet && { echo "Nothing new"; exit 0; }
+          git commit --quiet -m "Traffic stats $(date -u +%F)"
+          git push --quiet origin stats

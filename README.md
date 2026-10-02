@@ -5,6 +5,8 @@
 A private, offline money tracker for Android and the web, built for one-handed use.
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
+[![Downloads](https://img.shields.io/github/downloads/GoutamkumarKoppolu/TrackMyBills/total?label=downloads&color=6d48ef)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
+
 **[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
 
 <p align="center">
