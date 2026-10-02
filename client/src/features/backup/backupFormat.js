@@ -352,7 +352,7 @@ export function parseBackup(fileText) {
   } catch {
     throw new Error("This file isn't a backup (it's not valid JSON).");
   }
-  need(backup && typeof backup === "object" && backup.app === BACKUP_APP, "This file isn't an Expense Tracker backup.");
+  need(backup && typeof backup === "object" && backup.app === BACKUP_APP, "This file isn't a DigiLog backup.");
   need(Number.isInteger(backup.format) && backup.format >= 1, "This backup is missing its format version.");
   need(
     backup.format <= BACKUP_FORMAT,

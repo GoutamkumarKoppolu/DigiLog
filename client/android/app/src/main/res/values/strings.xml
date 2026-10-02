@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Expense Tracker</string>
-    <string name="title_activity_main">Expense Tracker</string>
+    <string name="app_name">DigiLog</string>
+    <string name="title_activity_main">DigiLog</string>
     <string name="package_name">com.goutam.expensetracker</string>
     <string name="custom_url_scheme">com.goutam.expensetracker</string>
 </resources>

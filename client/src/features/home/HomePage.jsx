@@ -31,7 +31,7 @@ export default function HomePage({ navigate, onOpenTransaction, BalanceNote }) {
       <section className="hero">
         <div className="hero-top">
           <span className="hero-brand">
-            <Wallet size={18} /> Expense Tracker
+            <Wallet size={18} /> DigiLog
           </span>
         </div>
         <div className="hero-balance">

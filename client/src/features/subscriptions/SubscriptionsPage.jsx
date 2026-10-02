@@ -19,7 +19,7 @@ const FORM_ID = "subscription-form";
 const REMINDER_NOTES = {
   granted: "A notification at 9 AM on your phone.",
   prompt: "A notification at 9 AM. Your phone will ask to allow notifications.",
-  denied: "Notifications are off for this app. Turn them on in Android Settings › Apps › Expense Tracker.",
+  denied: "Notifications are off for this app. Turn them on in Android Settings › Apps › DigiLog.",
   unsupported: "Reminders work in the Android app.",
 };
 

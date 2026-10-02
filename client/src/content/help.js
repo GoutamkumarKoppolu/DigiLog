@@ -49,11 +49,11 @@ export const HELP = {
     title: "Why back up",
     body: [
       "Your data lives only on this device. Uninstalling the app, clearing its storage or switching phones removes it, and there's no server copy.",
-      "Export saves everything to a single file. Save to phone puts it in Documents › Expense Tracker, where it stays even if you uninstall the app. Share sends it to Drive, WhatsApp or email, which is the safe choice before resetting or changing phones.",
+      "Export saves everything to a single file. Save to phone puts it in Documents › DigiLog, where it stays even if you uninstall the app. Share sends it to Drive, WhatsApp or email, which is the safe choice before resetting or changing phones.",
       "Use Import on the new install and pick the file to get it all back.",
       "Backups from older versions of the app still work: anything new is filled in with sensible defaults, and the file is checked before anything on your device changes.",
     ],
-    example: "Reinstalling: Save to phone first, then after reinstalling, Import → Documents › Expense Tracker → the file → Replace my data. Changing phones: Share → Drive, then Import it on the new phone.",
+    example: "Reinstalling: Save to phone first, then after reinstalling, Import → Documents › DigiLog → the file → Replace my data. Changing phones: Share → Drive, then Import it on the new phone.",
   },
   budgets: {
     title: "How budgets work",

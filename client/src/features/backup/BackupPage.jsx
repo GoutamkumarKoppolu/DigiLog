@@ -79,7 +79,7 @@ export default function BackupPage({ navigate }) {
   const [exporting, setExporting] = useState(false);
   const [savedTo, setSavedTo] = useState("");
 
-  // "device" saves into Documents/Expense Tracker (a download in a browser);
+  // "device" saves into Documents/DigiLog (a download in a browser);
   // "share" opens the share sheet (Drive, WhatsApp, email…).
   async function handleExport(target = "device") {
     try {
@@ -172,7 +172,7 @@ export default function BackupPage({ navigate }) {
           <h2>Export</h2>
           <p className="muted">
             Saves all your transactions, savings, recurring payments, budgets, borrowed & lent, credit cards, bills (with their files), options and theme to one file. Do this before uninstalling the app
-            or changing phones. Save to phone puts the file in Documents › Expense Tracker; Share sends it to Drive, WhatsApp or email.
+            or changing phones. Save to phone puts the file in Documents › DigiLog; Share sends it to Drive, WhatsApp or email.
           </p>
           <p className="muted backup-meta">
             {lastExport ? `Last exported: ${dateHeading(localDate(lastExport))}` : "You haven't exported a backup on this device yet."}

@@ -1,9 +1,11 @@
-# Track My Bills
+# DigiLog
+
+*Track to the tail.*
 
 A private, offline money tracker for Android and the web, built for one-handed use.
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
-**[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/expense-tracker.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
+**[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases)
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="200" alt="Home: current balance, monthly income, expenses and savings, and transactions" />
@@ -42,7 +44,7 @@ Budgets, subscriptions and logged card spends are tracking only and never change
 
 ## Install on Android
 
-1. On your phone, tap **[Download the APK](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/expense-tracker.apk)**.
+1. On your phone, tap **[Download the APK](https://github.com/GoutamkumarKoppolu/TrackMyBills/releases/latest/download/digilog.apk)**.
 2. Open the downloaded file. If Android asks, allow your browser or Files app to **install unknown apps**.
 3. If Play Protect warns that the app is unknown, tap **More details → Install anyway** (it's not on the Play Store, see the FAQ).
 
@@ -78,7 +80,7 @@ Free, no ads, no account, no in-app purchases.
 Only on your phone, in the app's own storage. Nothing is sent anywhere, and the app works fully offline.
 
 **Will I lose my data if I uninstall or change phones?**
-Uninstalling deletes the app's data. Before that, go to **More → Backup & restore → Save to phone** (it's kept in *Documents › Expense Tracker*) or **Share** it to Drive. On the new install, **Import** that file. Updating to a new version keeps your data.
+Uninstalling deletes the app's data. Before that, go to **More → Backup & restore → Save to phone** (it's kept in *Documents › DigiLog*) or **Share** it to Drive. On the new install, **Import** that file. Updating to a new version keeps your data.
 
 **Why does Android say the app is unknown or unsafe?**
 It's installed from GitHub, not the Play Store, so Play Protect doesn't know it. The code is all here, and each APK is built by GitHub Actions from this repository.

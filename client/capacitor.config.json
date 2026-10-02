@@ -1,6 +1,6 @@
 {
   "appId": "com.goutam.expensetracker",
-  "appName": "Expense Tracker",
+  "appName": "DigiLog",
   "webDir": "dist",
   "android": {
     "adjustMarginsForEdgeToEdge": "auto"
