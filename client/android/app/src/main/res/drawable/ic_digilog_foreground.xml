@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The DigiLog mark ("Ledger D"): a D with three entry lines cut out
-     (even-odd fill). Same path as src/components/ui/AppMark.jsx. Also used as
+<!-- The DigiLog mark ("Rupee trail"): a ₹ drawn as strokes leaving three
+     fading dots. Same shapes as src/components/ui/AppMark.jsx. Also used as
      the one-colour layer for Android 13+ themed icons. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -8,7 +8,21 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
+        android:pathData="M44,31H72M44,43H72M48,31H56A12,12 0,0 1,56 55H48M50,55L71,77"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
         android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M30,30H54A24,24 0,0 1,54 78H30Z M38,41.5H62A2.5,2.5 0,0 1,62 46.5H38A2.5,2.5 0,0 1,38 41.5Z M38,51.5H68A2.5,2.5 0,0 1,68 56.5H38A2.5,2.5 0,0 1,38 51.5Z M38,61.5H58A2.5,2.5 0,0 1,58 66.5H38A2.5,2.5 0,0 1,38 61.5Z" />
+        android:fillAlpha="0.9"
+        android:pathData="M32.8,55a4.2,4.2 0,1 0,8.4 0a4.2,4.2 0,1 0,-8.4 0z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.6"
+        android:pathData="M26.3,55a3.2,3.2 0,1 0,6.4 0a3.2,3.2 0,1 0,-6.4 0z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.35"
+        android:pathData="M21.2,55a2.3,2.3 0,1 0,4.6 0a2.3,2.3 0,1 0,-4.6 0z" />
 </vector>
