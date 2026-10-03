@@ -4,6 +4,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import ErrorBanner from "../../components/ui/ErrorBanner";
 import { useLedger } from "../ledger";
 import { KIND_LABELS, TRANSACTION_KINDS } from "../../domain/transactions";
+import { capitalize } from "../../utils/format";
 
 // One settings group: a list of options with remove buttons and an add row.
 // `withKind` adds the earning/expense/saving picker used by transaction types.
@@ -25,7 +26,7 @@ function OptionGroup({ title, kind, options, placeholder, withKind, onAdd, onDel
         {options.map((o) => (
           <div className="list-row" key={o.id}>
             <span className="list-row-text">
-              <span className="list-row-title">{o.name}</span>
+              <span className="list-row-title">{capitalize(o.name)}</span>
             </span>
             {withKind && <span className={`pill kind-${o.kind}`}>{KIND_LABELS[o.kind] || o.kind}</span>}
             <button

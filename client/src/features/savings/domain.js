@@ -70,6 +70,7 @@ export function buildHistory(savings, withdrawals, movements = [], tag = "") {
       key: `withdrawal-${w.id}`,
       id: w.id,
       entry: "withdrawal",
+      toBalance: Boolean(w.to_balance),
       tag: w.tag,
       amount: Number(w.amount),
       date: w.date,

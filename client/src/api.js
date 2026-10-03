@@ -3,9 +3,19 @@
 // needs zero changes. Validation and error messages are carried over
 // verbatim from server/routes/transactions.js, options.js, and
 // creditCards.js for behavioral parity.
+import Dexie from "dexie";
 import { db } from "./db";
 import { isKnownOption, requirePositiveAmount, requireNonEmpty } from "./db/validators";
-import { TRANSACTION_KINDS, computeTotals, matchesFilters, movementTotals, normalizeDeductFlag } from "./domain/transactions";
+import {
+  TRANSACTION_KINDS,
+  balanceEffect,
+  balanceShortfall,
+  computeTotals,
+  matchesFilters,
+  movementTotals,
+  normalizeDeductFlag,
+} from "./domain/transactions";
+import { currency } from "./utils/format";
 
 const nowIso = () => new Date().toISOString();
 
@@ -181,11 +191,82 @@ async function runTransactionGuards(before, after) {
   for (const guard of transactionGuards) await guard(before, after);
 }
 
+// ---------- the balance rule ----------
+// The current balance may never go below zero (one that already is, from
+// before this rule, may not go any lower). Every change that can lower it
+// runs through withBalanceCheck, in any feature.
+
+export class BalanceError extends Error {}
+
+export async function currentBalance() {
+  return (await fetchOverview()).balance;
+}
+
+// "Your balance is ₹2,000. This would take it to −₹3,000." for refusals;
+// callers add what the user can do about it.
+export function balanceMessage({ before, after }) {
+  return `Your balance is ${currency(before)}. This would take it to ${currency(after)}.`;
+}
+
+const insideBalanceCheck = () => {
+  for (let tx = Dexie.currentTransaction; tx; tx = tx.parent) if (tx.balanceChecked) return true;
+  return false;
+};
+
+// Runs `writes` in one transaction over every table and undoes all of it if
+// the balance would break the rule. `explain({ before, after, short })` words
+// the refusal. Nested calls are checked once, by the outermost one, so a
+// change made of several steps (an expense plus the money that covers it) is
+// judged as a whole.
+export function withBalanceCheck(writes, explain = balanceMessage) {
+  if (insideBalanceCheck()) return writes();
+  return db.transaction("rw", db.tables, async (tx) => {
+    tx.balanceChecked = true;
+    const before = await currentBalance();
+    const result = await writes();
+    const after = await currentBalance();
+    const short = balanceShortfall(before, after);
+    if (short > 0) throw new BalanceError(explain({ before, after, short }));
+    return result;
+  });
+}
+
+// How much more money a transaction (new, or `id` edited) needs than the
+// balance has; 0 when it fits. Lets the + sheet ask where the rest came from.
+export async function shortfallFor(data, id) {
+  const [before, kinds, existing] = await Promise.all([
+    currentBalance(),
+    kindByTypeNameMap(),
+    id ? db.transactions.get(Number(id)) : null,
+  ]);
+  const effect = (t) => balanceEffect({ ...t, type_kind: kinds[t.type] ?? null });
+  const kind = kinds[data.type] ?? null;
+  const next = { ...data, deduct_from_balance: normalizeDeductFlag(kind, data.deduct_from_balance) };
+  const after = before - (existing ? effect(existing) : 0) + effect(next);
+  return balanceShortfall(before, after);
+}
+
+// Rows other features keep for one transaction, e.g. savings or borrowed
+// money that covered an expense. `fn(transactionId)` removes them when the
+// transaction is deleted, or throws an Error to refuse the delete.
+const transactionDependents = [];
+
+export function registerTransactionDependents(fn) {
+  transactionDependents.push(fn);
+}
+
 export async function createTransaction(data) {
   const trimmedTag = await validateTransactionFields(data);
   const record = await transactionRecord(data, trimmedTag);
-  const id = await db.transactions.add({ ...record, created_at: nowIso() });
-  return attachTypeKind(await db.transactions.get(id));
+  return withBalanceCheck(
+    async () => {
+      const id = await db.transactions.add({ ...record, created_at: nowIso() });
+      return attachTypeKind(await db.transactions.get(id));
+    },
+    ({ before, short }) =>
+      `Not enough balance: you have ${currency(before)}, and this needs ${currency(short)} more. ` +
+      "Add it from the + button to say where the rest came from (savings or borrowed), or lower the amount."
+  );
 }
 
 export async function updateTransaction(id, data) {
@@ -196,16 +277,35 @@ export async function updateTransaction(id, data) {
   if (!existing) throw new Error("Transaction not found");
 
   const record = await transactionRecord(data, trimmedTag);
-  await runTransactionGuards(await attachTypeKind(existing), await attachTypeKind({ ...existing, ...record }));
-  await db.transactions.update(txId, record);
-  return attachTypeKind(await db.transactions.get(txId));
+  const before = await attachTypeKind(existing);
+  await runTransactionGuards(before, await attachTypeKind({ ...existing, ...record }));
+  return withBalanceCheck(
+    async () => {
+      await db.transactions.update(txId, record);
+      return attachTypeKind(await db.transactions.get(txId));
+    },
+    (ctx) =>
+      `${balanceMessage(ctx)} ` +
+      (before.type_kind === "earning"
+        ? `${currency(ctx.short)} of this earning has already been spent or saved. Edit or delete what it paid for first.`
+        : `It needs ${currency(ctx.short)} more than you have. Lower the amount, or add money to your balance first.`)
+  );
 }
 
 export async function deleteTransaction(id) {
   const txId = Number(id);
   const existing = await db.transactions.get(txId);
   if (!existing) throw new Error("Transaction not found");
-  await runTransactionGuards(await attachTypeKind(existing), null);
-  await db.transactions.delete(txId);
-  return null;
+  const row = await attachTypeKind(existing);
+  await runTransactionGuards(row, null);
+  return withBalanceCheck(
+    async () => {
+      for (const removeDependents of transactionDependents) await removeDependents(txId);
+      await db.transactions.delete(txId);
+      return null;
+    },
+    (ctx) =>
+      `Can't delete this ${currency(row.amount)} ${row.type_kind ?? "transaction"}. ${balanceMessage(ctx)} ` +
+      `${currency(ctx.short)} of it has already been spent or saved. Edit or delete what it paid for first.`
+  );
 }

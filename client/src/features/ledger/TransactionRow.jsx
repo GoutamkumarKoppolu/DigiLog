@@ -1,5 +1,5 @@
 import { deductsFromBalance, isSaving } from "../../domain/transactions";
-import { currency, shortDate } from "../../utils/format";
+import { capitalize, currency, shortDate } from "../../utils/format";
 import { kindMeta } from "./kindMeta";
 
 // One tappable transaction card row. `showDate` adds the date to the
@@ -7,7 +7,7 @@ import { kindMeta } from "./kindMeta";
 export default function TransactionRow({ t, onSelect, showDate = false }) {
   const meta = kindMeta(t.type_kind);
   const Icon = meta.icon;
-  const details = [showDate && shortDate(t.date), t.type, t.payment_method, t.payment_source, t.note].filter(Boolean).join(" · ");
+  const details = [showDate && shortDate(t.date), capitalize(t.type), t.payment_method, t.payment_source, t.note].filter(Boolean).join(" · ");
 
   return (
     <button type="button" className="tx-row" onClick={() => onSelect(t)}>

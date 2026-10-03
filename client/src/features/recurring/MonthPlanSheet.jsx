@@ -1,14 +1,18 @@
 import { CircleCheck, Repeat } from "lucide-react";
 import BottomSheet from "../../components/ui/BottomSheet";
 import Money from "../../components/ui/Money";
-import { currency, monthLabel, shortDate } from "../../utils/format";
+import { currency, monthLabel, shortDate, today } from "../../utils/format";
 import { useMonthPlan } from "./useMonthPlan";
 
 const STATE_PILL = {
   due: { tone: "accent", text: "Upcoming" },
   waiting: { tone: "warning", text: "Waiting for salary" },
   deducted: { tone: "positive", text: "Paid" },
+  // Due day passed but the balance couldn't cover it yet.
+  short: { tone: "negative", text: "Not enough balance" },
 };
+
+const pillFor = (r) => STATE_PILL[r.state === "due" && r.date <= today() ? "short" : r.state];
 
 const monthName = (month) => monthLabel(month).split(" ")[0];
 
@@ -109,7 +113,7 @@ export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRec
                   </span>
                   <span className="plan-row-end">
                     <span className="tx-amount">{currency(r.amount)}</span>
-                    <span className={`pill tone-${STATE_PILL[r.state].tone}`}>{STATE_PILL[r.state].text}</span>
+                    <span className={`pill tone-${pillFor(r).tone}`}>{pillFor(r).text}</span>
                   </span>
                 </div>
               ))}

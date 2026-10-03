@@ -122,8 +122,19 @@ describe("parseBackup: borrowed & lent", () => {
 
   it("imports records and payments", () => {
     const { tables } = parseBackup(backupWith({ borrow_records: [record], borrow_payments: [payment] }));
-    expect(tables.borrow_records).toEqual([record]);
+    expect(tables.borrow_records).toEqual([{ ...record, transaction_id: null }]);
     expect(tables.borrow_payments).toEqual([payment]);
+  });
+
+  it("keeps the expense a borrowing covered", () => {
+    const { tables } = parseBackup(backupWith({ borrow_records: [{ ...record, transaction_id: 7 }] }));
+    expect(tables.borrow_records[0].transaction_id).toBe(7);
+  });
+
+  it("reads older savings uses as not moved to the balance", () => {
+    const use = { id: 1, tag: "Trip", amount: 500, date: "2026-09-02", note: null, created_at: "2026-09-02T10:00:00.000Z" };
+    const { tables } = parseBackup(backupWith({ savings_withdrawals: [use] }));
+    expect(tables.savings_withdrawals).toEqual([{ ...use, to_balance: false, transaction_id: null }]);
   });
 
   it("starts empty for a backup made before it existed", () => {

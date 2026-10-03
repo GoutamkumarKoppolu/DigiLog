@@ -11,7 +11,8 @@ const ordinal = (n) => {
 // This month's state as a short label and a tone.
 const STATUS = {
   deducted: (s) => [`Deducted on ${shortDate(s.date)}`, "positive"],
-  due: (s) => [`Due on ${shortDate(s.date)}`, "warning"],
+  // A due day that has passed means the balance couldn't cover it yet.
+  due: (s, today) => (s.date <= today ? [`Not enough balance · due ${shortDate(s.date)}`, "negative"] : [`Due on ${shortDate(s.date)}`, "warning"]),
   waiting: (s) => [`Waiting for salary · ${shortDate(s.date)}`, "accent"],
   removed: () => ["Deleted this month", "negative"],
   starts: (s) => [`Starts ${shortDate(s.date)}`, "accent"],
@@ -24,7 +25,7 @@ const STATUS = {
 // expands to details, month-by-month history and actions.
 export default function RecurringCard({ entry, today, open, onToggle, onEdit, onDelete, onSetCompleted, onSetPaused, onSetSkipped }) {
   const { item, prog, status } = entry;
-  const [label, tone] = STATUS[status.state](status);
+  const [label, tone] = STATUS[status.state](status, today);
   const Icon = item.kind === "saving" ? PiggyBank : Repeat;
   const total = prog.remaining != null ? prog.paid + prog.remaining : item.duration;
   const done = prog.remaining != null ? prog.paid : prog.paidCount;
