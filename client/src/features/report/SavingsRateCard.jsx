@@ -3,7 +3,7 @@ import ColumnChart from "../../components/ui/ColumnChart";
 import InfoButton from "../../components/ui/InfoButton";
 import { fetchTransactions } from "../../api";
 import { useLedger } from "../ledger";
-import { isSalary, salaryMonth } from "../../domain/salary";
+import { ledgerMonth } from "../../domain/salary";
 import { currency, monthLabel } from "../../utils/format";
 import { averageRate, monthlyTrend } from "./domain";
 
@@ -14,8 +14,6 @@ const SERIES = [
   { key: "saved", label: "Saved", color: "var(--cat-3)" },
 ];
 
-// A salary counts in the month it pays for, so one on 30 Sep is October's.
-const monthOf = (t) => (isSalary(t) ? salaryMonth(t.date) : t.date.slice(0, 7));
 const pct = (rate) => `${Math.round(rate * 100)}%`;
 
 // Top of the Report: how much of `month`'s income was kept (not spent), the
@@ -35,7 +33,7 @@ export default function SavingsRateCard({ month }) {
   }, [ledgerVersion]);
 
   if (!rows) return null;
-  const trend = monthlyTrend(rows, month, monthOf);
+  const trend = monthlyTrend(rows, month, ledgerMonth);
   const focus = trend[trend.length - 1];
   const average = averageRate(trend);
   const name = monthLabel(month).split(" ")[0];

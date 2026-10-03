@@ -1,5 +1,6 @@
 // Pure business rules for ledger transactions: no UI, no storage.
 // Rows passed in are expected to carry `type_kind` (attached by api.js).
+import { ledgerMonth } from "./salary";
 
 export const TRANSACTION_KINDS = ["earning", "expense", "saving"];
 
@@ -52,8 +53,9 @@ export function computeTotals(rows) {
 }
 
 // filters: { months: string[], tags: string[], kind: "" | kind, deduction: DEDUCTION_FILTERS value }
+// A salary is in the month it pays for (30 Sep's salary is October's).
 export function matchesFilters(t, { months = [], tags = [], kind = "", deduction = DEDUCTION_FILTERS.ALL } = {}) {
-  if (months.length && !months.includes(t.date.slice(0, 7))) return false;
+  if (months.length && !months.includes(ledgerMonth(t))) return false;
   if (tags.length && !tags.includes(t.tag)) return false;
   if (kind && t.type_kind !== kind) return false;
   if (kind === "saving" && deduction !== DEDUCTION_FILTERS.ALL) {
