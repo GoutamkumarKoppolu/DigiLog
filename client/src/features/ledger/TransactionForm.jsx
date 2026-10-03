@@ -177,7 +177,7 @@ export default function TransactionForm(props) {
           {picks.map((p) => (
             <div className="field" key={p.label}>
               <span className="field-label">{p.label}</span>
-              <div className="chip-group chip-group-scroll" role="group" aria-label={p.label}>
+              <div className="chip-group" role="group" aria-label={p.label}>
                 {p.tags.map((t) => (
                   <button
                     type="button"

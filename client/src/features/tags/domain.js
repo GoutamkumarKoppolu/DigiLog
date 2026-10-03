@@ -1,6 +1,7 @@
 // Pure rules for the Tags page: every transaction grouped by kind, then by
 // tag, then by month, across whatever period is selected.
 import { deductsFromBalance } from "../../domain/transactions";
+import { ledgerMonth } from "../../domain/salary";
 
 // Display order of kind sections.
 export const TAG_SECTIONS = [
@@ -12,7 +13,7 @@ export const TAG_SECTIONS = [
 function groupByMonth(rows) {
   const months = new Map();
   rows.forEach((t) => {
-    const month = t.date.slice(0, 7);
+    const month = ledgerMonth(t);
     if (!months.has(month)) months.set(month, []);
     months.get(month).push(t);
   });

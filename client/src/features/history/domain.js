@@ -3,12 +3,16 @@
 // movements (borrowed & lent) stay, so the page warns about them.
 import { balanceEffect, computeTotals, isSaving } from "../../domain/transactions";
 import { computePots } from "../savings/domain";
+import { ledgerMonth } from "../../domain/salary";
 
-const inMonth = (month) => (row) => !month || row.date.slice(0, 7) === month;
+// Transactions are in their ledger month (a salary in the month it pays
+// for, like everywhere else); savings uses and movements in their date's.
+const monthOf = (row) => (row.type_kind ? ledgerMonth(row) : row.date.slice(0, 7));
+const inMonth = (month) => (row) => !month || monthOf(row) === month;
 
 // Months that have history, newest first.
 export function historyMonths(transactions, withdrawals) {
-  return [...new Set([...transactions, ...withdrawals].map((r) => r.date.slice(0, 7)))].sort().reverse();
+  return [...new Set([...transactions, ...withdrawals].map(monthOf))].sort().reverse();
 }
 
 // transactions need `type_kind`; movements are all movement rows.

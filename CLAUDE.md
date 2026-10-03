@@ -51,7 +51,8 @@ client/src/
                            registerMovementSource / fetchMovements
   domain/transactions.js   Pure ledger rules: kinds, balance-deduction flag, computeTotals, matchesFilters
   domain/salary.js         Pure salary rules shared by Recurring, the spending plan and the Report: isSalary, which
-                           month a salary pays for (salaryMonth: on/after the 25th → next month), planMonth
+                           month a salary pays for (salaryMonth: on/after the 25th → next month), planMonth, and
+                           ledgerMonth (the month any row counts in: a salary's pay month, else its date's month)
   utils/format.js          Shared helpers: currency, compactCurrency (₹12.35L), dates, periodLabel, groupByDate
   components/
     ui/                    Design-system primitives: BottomSheet, PageHeader (collapsing large title),
@@ -147,7 +148,7 @@ client/src/
 | `subscriptions` (v7) | `id`, `name`, `amount`, `cycle` (`monthly` \| `yearly`), `day` (1–31), `month` (yearly only), `payment_method` / `category` (free text), `trial_end` (date or `null`), `remind` (`off` \| `0` \| `1` \| `3` days before), `cancelled_at` (date or `null`), `card_id` (credit card it's charged to, or `null`; missing/deleted card = none), `created_at` |
 
 Conventions in the data layer:
-- Dates are stored as **strings** (`date` = `"YYYY-MM-DD"`, `created_at` = ISO). Month keys are `date.slice(0, 7)` (`"YYYY-MM"`). Never store `Date` objects. To turn a timestamp into a date, use `localDate()` / `today()` from `utils/format.js`, never `iso.slice(0, 10)`: that gives the UTC date, which is yesterday before 05:30 IST.
+- Dates are stored as **strings** (`date` = `"YYYY-MM-DD"`, `created_at` = ISO). Month keys are `date.slice(0, 7)` (`"YYYY-MM"`), except that wherever a month is picked for ledger rows (Home's cards and list via `matchesFilters`, the Report, Tags, Delete history) a **salary counts in the month it pays for** (`ledgerMonth` in `domain/salary.js`: 30 Sep's salary is October's); its row says "Counts for October". Never store `Date` objects. To turn a timestamp into a date, use `localDate()` / `today()` from `utils/format.js`, never `iso.slice(0, 10)`: that gives the UTC date, which is yesterday before 05:30 IST.
 - Transactions reference their type by **name**. `api.js` derives `type_kind` at read time, and all totals are computed from `type_kind`, not the type name.
 - **Balance and savings rules** (in `domain/transactions.js` and `features/savings/domain.js`):
   - Current balance = earnings − expenses − savings that deduct from the balance ± movements into/out of the balance.

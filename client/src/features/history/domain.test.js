@@ -48,6 +48,13 @@ describe("planHistoryDelete", () => {
     expect(plan.balanceChange).toBe(-50000 + 2000 + 5000 - 1000);
   });
 
+  it("deletes a salary with the month it pays for (30 Sep's salary is October's)", () => {
+    const rows = [tx(10, "earning", 85000, "2026-09-30", "Salary"), tx(11, "expense", 100, "2026-09-30")];
+    expect(planHistoryDelete({ transactions: rows, withdrawals: [], movements: [] }, "2026-10").transactions.map((t) => t.id)).toEqual([10]);
+    expect(planHistoryDelete({ transactions: rows, withdrawals: [], movements: [] }, "2026-09").transactions.map((t) => t.id)).toEqual([11]);
+    expect(historyMonths(rows, [])).toEqual(["2026-10", "2026-09"]);
+  });
+
   it("is empty for a month with nothing in it", () => {
     expect(planHistoryDelete({ transactions, withdrawals: [], movements: [] }, "2025-01").empty).toBe(true);
   });

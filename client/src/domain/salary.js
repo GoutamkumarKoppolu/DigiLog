@@ -29,3 +29,8 @@ export function planMonth(salarySet, today) {
   const next = shiftMonth(today.slice(0, 7), 1);
   return salarySet.has(next) ? next : today.slice(0, 7);
 }
+
+// The month a ledger row counts in, wherever a month is picked (Home, the
+// Report, Tags, Delete history): a salary counts in the month it pays for,
+// everything else in the month of its date. Rows need `type_kind`.
+export const ledgerMonth = (t) => (isSalary(t) ? salaryMonth(t.date) : t.date.slice(0, 7));

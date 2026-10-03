@@ -34,7 +34,7 @@ export default function PlanSheet({ onClose }) {
 
 // Mounted once the plan has loaded, so the rows start from it.
 function PlanForm({ plan, usable, onSaved }) {
-  const { tags, refresh } = useLedger();
+  const { refresh } = useLedger();
   const [rows, setRows] = useState(() => plan.rows.map((r) => ({ tag: r.tag, amount: String(r.amount) })));
   const [tag, setTag] = useState("");
   const [amount, setAmount] = useState("");
@@ -59,10 +59,12 @@ function PlanForm({ plan, usable, onSaved }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const problem = planProblem(rows);
+    // A tag typed in the add row but not added with + is saved too.
+    const all = tag.trim() || amount ? [...rows, { tag, amount }] : rows;
+    const problem = planProblem(all);
     if (problem) return setError(problem);
     try {
-      await savePlan(plan.month, rows);
+      await savePlan(plan.month, all);
       refresh();
       onSaved();
     } catch (err) {
@@ -153,8 +155,8 @@ function PlanForm({ plan, usable, onSaved }) {
             <Plus size={20} />
           </button>
         </div>
-        <TagSuggestions value={tag} tags={tags.filter((t) => !inPlan(t))} onPick={setTag} label="Your tags" />
       </div>
+      <TagSuggestions value={tag} tags={plan.spendTags.filter((t) => !inPlan(t))} onPick={setTag} label="Tags you spend on" />
     </form>
   );
 }

@@ -667,12 +667,26 @@ button.tx-row:active {
   min-width: 0;
 }
 
-.tx-title,
 .tx-sub {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Names wrap to a second line before they're cut, so long tags and pots
+   ("Groceries and household supplies") stay readable at 360px. */
+.tx-title,
+.report-item-title,
+.tag-card-title,
+.file-tile-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .tx-title {
@@ -885,9 +899,14 @@ button.tx-row:active {
 
 .chip-group-scroll {
   flex-wrap: nowrap;
-  margin-top: -6px;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+/* Pulled up toward the field it suggests for, only when it sits straight in
+   a form (16px gap). Inside a .field (6px gap) that would make it touch. */
+.form > .chip-group-scroll {
+  margin-top: -6px;
 }
 
 .chip-group-scroll::-webkit-scrollbar {
@@ -1125,10 +1144,7 @@ button.tx-row:active {
 }
 
 .report-item-title {
-  overflow: hidden;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .report-item-amount {
@@ -1928,11 +1944,7 @@ button.list-row:active {
 }
 
 .tag-card-title {
-  max-width: 100%;
-  overflow: hidden;
   font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .tag-card-sub {
@@ -2037,6 +2049,11 @@ button.list-row:active {
 .warning-note {
   background: var(--warning-soft);
   color: var(--text);
+}
+
+/* A soft button on the warning tint would mix with it; keep it readable. */
+.warning-note .btn-soft {
+  background: var(--surface);
 }
 
 .warning-note svg {
@@ -2214,11 +2231,8 @@ button.list-row:active {
 }
 
 .file-tile-name {
-  overflow: hidden;
   padding: 0 4px;
   font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .file-tile-meta {
@@ -2530,7 +2544,7 @@ button.list-row:active {
 
 /* Usable balance under the current balance on Home (tap for the breakup). */
 .hero-usable {
-  min-height: 32px;
+  min-height: 44px; /* a full tap target, which also spaces it from the balance */
   padding: 4px 10px;
   border: 0;
   border-radius: 999px;

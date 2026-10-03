@@ -25,5 +25,12 @@ export function useSpendingPlan() {
   if (!data) return null;
   const month = planMonth(salaryMonths(data.transactions), today());
   const rows = planProgress(data.plans, data.transactions, month);
-  return { month, rows, setAside: stillSetAside(rows), previous: previousPlan(data.plans, month) };
+  return {
+    month,
+    rows,
+    setAside: stillSetAside(rows),
+    previous: previousPlan(data.plans, month),
+    // Tags you've spent on, newest first: suggestions for new plan tags.
+    spendTags: [...new Set(data.transactions.filter((t) => t.type_kind === "expense").map((t) => t.tag))],
+  };
 }
