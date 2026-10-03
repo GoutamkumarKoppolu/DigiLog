@@ -42,6 +42,10 @@ export const localDate = (value = new Date()) => {
 
 export const today = () => localDate();
 
+// Option names for display: first letter upper-cased, the rest kept
+// ("expense" → "Expense"). Not for free text like tags ("iCloud").
+export const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 export const currentMonth = () => today().slice(0, 7);
 
 const monthDate = (ym) => new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1);
