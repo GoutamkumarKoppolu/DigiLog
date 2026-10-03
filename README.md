@@ -17,6 +17,12 @@ Everything stays on your phone: no account, no server, no ads, no SMS permission
 
 **[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/DigiLog/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/DigiLog/releases)
 
+## Demo
+
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/9731c98e-6896-469d-b651-b1870af14179" controls width="320"></video>
+</p>
+
 <p align="center">
   <img src="docs/screenshots/home.png" width="200" alt="Home: current balance, monthly income, expenses and savings, and transactions" />
   <img src="docs/screenshots/report.png" width="200" alt="Report: donut chart of expenses by tag" />
