@@ -5,6 +5,8 @@ import ErrorBanner from "../../components/ui/ErrorBanner";
 import KindChips from "./KindChips";
 import TransactionForm from "./TransactionForm";
 import { useLedger } from "./ledgerContext";
+import { shortfallFor } from "../../api";
+import { balanceEffect } from "../../domain/transactions";
 
 const FORM_ID = "transaction-form";
 
@@ -14,8 +16,12 @@ const FORM_ID = "transaction-form";
 // onDone, onError }) }. `tagGroups` / `tagHints` go to TransactionForm.
 // `onSaved(row, { created })` gets the saved transaction (with `type_kind`)
 // after the sheet closes, e.g. to follow a new salary with its summary.
-export default function TransactionSheet({ transaction, entries = [], tagGroups = [], tagHints = [], onSaved, onClose }) {
-  const { options, tags, error, setError, saveTransaction, removeTransaction, refresh } = useLedger();
+// `Funding` (a component) asks where the rest came from when a transaction
+// needs more than the balance has; without it, the save is just refused.
+export default function TransactionSheet({ transaction, entries = [], tagGroups = [], tagHints = [], Funding, onSaved, onClose }) {
+  const { options, tags, overview, error, setError, saveTransaction, removeTransaction, refresh } = useLedger();
+  // { data, short } while the Funding sheet is open on top.
+  const [funding, setFunding] = useState(null);
   // Which chip is picked; the amount is carried over when switching.
   const [mode, setMode] = useState({ extra: null, type: "", amount: "" });
   const extras = transaction ? [] : entries;
@@ -32,11 +38,25 @@ export default function TransactionSheet({ transaction, entries = [], tagGroups 
     setMode(next);
   }
 
-  async function handleSubmit(data) {
-    if (!(await saveTransaction(data, transaction?.id))) return;
+  function saved(row) {
     onClose();
+    onSaved?.(row, { created: !transaction });
+  }
+
+  async function handleSubmit(data) {
     const kind = options["transaction-types"].find((t) => t.name === data.type)?.kind ?? null;
-    onSaved?.({ ...data, type_kind: kind }, { created: !transaction });
+    const row = { ...data, type_kind: kind };
+    // Spending more than the balance has: ask where the rest came from.
+    if (Funding && balanceEffect(row) < 0) {
+      try {
+        setError("");
+        const short = await shortfallFor(data, transaction?.id);
+        if (short > 0) return setFunding({ data: row, short });
+      } catch (e) {
+        return setError(e.message);
+      }
+    }
+    if (await saveTransaction(data, transaction?.id)) saved(row);
   }
 
   async function handleDelete() {
@@ -55,53 +75,68 @@ export default function TransactionSheet({ transaction, entries = [], tagGroups 
   );
 
   return (
-    <BottomSheet
-      title={transaction ? "Edit transaction" : "Add transaction"}
-      onClose={onClose}
-      footer={
-        <>
-          {transaction && (
-            <button type="button" className="btn btn-danger-ghost" onClick={handleDelete}>
-              <Trash2 size={18} /> Delete
+    <>
+      <BottomSheet
+        title={transaction ? "Edit transaction" : "Add transaction"}
+        onClose={onClose}
+        footer={
+          <>
+            {transaction && (
+              <button type="button" className="btn btn-danger-ghost" onClick={handleDelete}>
+                <Trash2 size={18} /> Delete
+              </button>
+            )}
+            <button type="submit" form={FORM_ID} className="btn btn-primary btn-block">
+              {transaction ? "Save changes" : entry ? "Save" : "Add transaction"}
             </button>
-          )}
-          <button type="submit" form={FORM_ID} className="btn btn-primary btn-block">
-            {transaction ? "Save changes" : entry ? "Save" : "Add transaction"}
-          </button>
-        </>
-      }
-    >
-      <ErrorBanner message={error} />
-      {entry ? (
-        <Fragment key={entry.id}>
-          {entry.render({
-            formId: FORM_ID,
-            amount: mode.amount,
-            kindChips,
-            onDone: () => {
-              refresh();
-              onClose();
-            },
-            onError: setError,
-          })}
-        </Fragment>
-      ) : (
-        <TransactionForm
-          key={mode.type}
-          id={FORM_ID}
-          transaction={transaction}
-          transactionTypes={options["transaction-types"]}
-          paymentMethods={options["payment-methods"]}
-          paymentSources={options["payment-sources"]}
-          existingTags={tags}
-          onSubmit={handleSubmit}
-          seed={mode}
-          extras={extras}
-          tagGroups={tagGroups}
-          tagHints={tagHints}
-          onPickExtra={(extra, amount) => switchTo({ extra, type: "", amount })}
+          </>
+        }
+      >
+        <ErrorBanner message={error} />
+        {entry ? (
+          <Fragment key={entry.id}>
+            {entry.render({
+              formId: FORM_ID,
+              amount: mode.amount,
+              kindChips,
+              onDone: () => {
+                refresh();
+                onClose();
+              },
+              onError: setError,
+            })}
+          </Fragment>
+        ) : (
+          <TransactionForm
+            key={mode.type}
+            id={FORM_ID}
+            transaction={transaction}
+            transactionTypes={options["transaction-types"]}
+            paymentMethods={options["payment-methods"]}
+            paymentSources={options["payment-sources"]}
+            existingTags={tags}
+            onSubmit={handleSubmit}
+            seed={mode}
+            extras={extras}
+            tagGroups={tagGroups}
+            tagHints={tagHints}
+            onPickExtra={(extra, amount) => switchTo({ extra, type: "", amount })}
+          />
+        )}
+      </BottomSheet>
+      {funding && (
+        <Funding
+          data={funding.data}
+          id={transaction?.id}
+          short={funding.short}
+          balance={overview.balance}
+          onClose={() => setFunding(null)}
+          onSaved={(row) => {
+            refresh();
+            saved({ ...funding.data, ...row });
+          }}
         />
       )}
-    </BottomSheet>
+    </>
   );
 }

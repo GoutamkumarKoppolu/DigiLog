@@ -17,6 +17,22 @@ export const isSaving = (t) => t.type_kind === "saving";
 // always deducted, so anything other than an explicit `false` counts.
 export const deductsFromBalance = (t) => isSaving(t) && t.deduct_from_balance !== false;
 
+// What a transaction does to the current balance: earnings add, expenses
+// and savings that deduct from the balance take away.
+export function balanceEffect(t) {
+  const amount = Number(t.amount) || 0;
+  if (t.type_kind === "earning") return amount;
+  if (t.type_kind === "expense" || deductsFromBalance(t)) return -amount;
+  return 0;
+}
+
+// The balance may never go below zero. One that already is (data from before
+// this rule) may not go any lower. Returns how much is missing, 0 if none.
+export function balanceShortfall(before, after) {
+  const floor = Math.round(Math.min(0, Number(before)) * 100);
+  return Math.max(0, floor - Math.round(Number(after) * 100)) / 100;
+}
+
 // Value to persist for the flag given the transaction's kind: only savings
 // carry it, and it defaults to deducting.
 export const normalizeDeductFlag = (kind, value) => (kind === "saving" ? value !== false : null);

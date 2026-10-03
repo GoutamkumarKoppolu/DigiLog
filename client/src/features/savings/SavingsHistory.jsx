@@ -50,6 +50,7 @@ export default function SavingsHistory({ entries, onDeleteWithdrawal }) {
                   <span className="tx-main">
                     <span className="tx-title">{isDeposit ? `Saved to ${e.tag}` : `Used from ${e.tag}`}</span>
                     {e.note && <span className="tx-sub">{e.note}</span>}
+                    {e.toBalance && <span className="pill tone-accent">To balance</span>}
                     {isDeposit && (
                       <span className={`pill ${e.deducted ? "tone-savings" : "tone-accent"}`}>
                         {e.deducted ? "From balance" : "Not from balance"}

@@ -2,7 +2,7 @@
 // ledger transactions (through the core api, same rules as the + button), so
 // balance, Home, Report, Tags and Savings all see them without changes.
 import { db } from "../../db";
-import { createTransaction, deleteTransaction, fetchAllOptions, fetchTransactions } from "../../api";
+import { BalanceError, createTransaction, deleteTransaction, fetchAllOptions, fetchTransactions } from "../../api";
 import { requireNonEmpty, requirePositiveAmount } from "../../db/validators";
 import { RECURRING_KINDS, duePayments, firstMonth, progress, salaryMonths } from "./domain";
 
@@ -134,7 +134,11 @@ async function addDuePayments(today) {
   const options = await fetchAllOptions();
   const known = (kind, value) => (value && options[kind].some((o) => o.name === value) ? value : null);
   let added = 0;
+  // Payments the balance can't cover wait (shown as "Not enough balance") and
+  // are added once money comes in; their later months wait behind them.
+  const waiting = new Set();
   for (const { item, month, date, amount } of due) {
+    if (waiting.has(item.id)) continue;
     // Never add a month twice, even if another run got there first.
     if (await db.recurring_runs.where("[recurring_id+month]").equals([item.id, month]).count()) continue;
     const tx = await createTransaction({
@@ -147,7 +151,12 @@ async function addDuePayments(today) {
       payment_source: known("payment-sources", item.payment_source),
       note: `Recurring: ${item.name}`,
       deduct_from_balance: item.deduct_from_balance,
+    }).catch((e) => {
+      if (!(e instanceof BalanceError)) throw e;
+      waiting.add(item.id);
+      return null;
     });
+    if (!tx) continue;
     try {
       await db.recurring_runs.add({ recurring_id: item.id, month, transaction_id: tx.id, created_at: nowIso() });
       added++;

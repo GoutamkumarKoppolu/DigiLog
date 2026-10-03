@@ -2763,3 +2763,33 @@ button.list-row:active {
     transition: none;
   }
 }
+
+/* ---------- Not enough balance (features/funding) ---------- */
+
+.funding-lead {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.funding-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.funding-status {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.funding-status.is-ok {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.funding-status.is-off {
+  background: var(--warning-soft);
+  color: var(--text);
+}

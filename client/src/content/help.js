@@ -14,7 +14,7 @@ export const HELP = {
     body: [
       "Not all savings come from your earnings. Some you set aside from your salary; some is money other people give you that you keep aside.",
       "Savings are grouped into pots by tag, so you can see exactly how much you saved from your salary, how much from money you were given, and so on, and how much of each you've already used.",
-      "Using savings lowers that pot. It never changes your current balance.",
+      "Using savings lowers that pot. It doesn't change your current balance, except when you use it to cover an expense your balance couldn't: then it moves into the balance first (see Not enough balance).",
     ],
     example: "Pot \"Salary savings\": ₹5,000. Pot \"Gift money\": ₹2,000 you were given. Spend ₹1,500 from \"Salary savings\" → ₹3,500 left there, the ₹2,000 in \"Gift money\" untouched.",
   },
@@ -83,6 +83,16 @@ export const HELP = {
       "Bills are stored only on this device and are included in your backup file, so export a backup before changing phones.",
     ],
     example: "Folder \"Warranties\": \"Fridge invoice\" (2 photos) and \"TV warranty card\" (a PDF). When the fridge needs repair, open the folder and show the invoice.",
+  },
+  balanceRule: {
+    title: "Not enough balance",
+    body: [
+      "Your current balance can never go below ₹0. Money you spend has to come from somewhere, so every rupee stays accounted for.",
+      "When an expense (or a saving taken from your balance) is more than your balance, say where the rest came from: a savings pot, money you borrowed, or part from each. That money moves into your balance, then the expense takes it to ₹0.",
+      "The savings used show in that pot's history, and borrowed money shows under Borrowed & lent, so you can repay it. Delete the expense later and they're removed with it.",
+      "Anything else that would take the balance below ₹0, like deleting a salary that's already been spent, is refused with what to do instead. Recurring payments wait, marked Not enough balance, until money comes in.",
+    ],
+    example: "Balance ₹20,000, a ₹50,000 expense → ₹30,000 more needed: ₹10,000 from \"Emergency\" savings + ₹20,000 borrowed from Ravi. Balance ₹0, Emergency down ₹10,000, you owe Ravi ₹20,000.",
   },
   borrowing: {
     title: "Borrowed & lent",

@@ -21,6 +21,7 @@ import { BillsPage } from "./features/bills";
 import { BorrowingPage, useBorrowEntries } from "./features/borrowing";
 import { MonthPlanSheet, RecurringEngine, RecurringPage, SALARY_HINT, UsableBalance, isSalary } from "./features/recurring";
 import { SubscriptionReminders, SubscriptionsPage } from "./features/subscriptions";
+import { FundingSheet } from "./features/funding";
 
 // Page registry. `tab` is the bottom-nav tab that stays highlighted; `add`
 // shows the + (add transaction) button; `hero` means the page starts with
@@ -53,10 +54,11 @@ const TABS = [
 ];
 
 // The + sheet with what other features add to it: Repay / Received chips,
-// the "Paying a credit card bill" switch and the Salary tag hint. A component
+// the "Paying a credit card bill" switch, the Salary tag hint and the "Not
+// enough balance" step. A component
 // of its own because those read the ledger, which App provides.
 function AddSheet(props) {
-  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} tagHints={[SALARY_HINT]} />;
+  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} tagHints={[SALARY_HINT]} Funding={FundingSheet} />;
 }
 
 export default function App() {

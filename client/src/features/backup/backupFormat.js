@@ -64,6 +64,10 @@ const blob = (v, field) => {
   return { $blob: v.$blob, type: typeof v.type === "string" ? v.type : "" };
 };
 
+// The expense a savings use or borrowing covered (the balance rule). Added
+// without a new database version: older rows covered nothing.
+const coveredTransaction = (v) => (v === undefined || v === null ? null : id(v, "transaction_id"));
+
 const optionalBlob = (v, field) => (v === undefined || v === null ? null : blob(v, field));
 
 // Borrowed & lent: where a record's or payment's money went. Added after
@@ -133,6 +137,8 @@ export const TABLE_SPECS = {
       amount: amount(r.amount),
       date: d,
       note: optional(r.note),
+      to_balance: r.to_balance === true,
+      transaction_id: coveredTransaction(r.transaction_id),
       created_at: createdAt(r.created_at, d),
     };
   },
@@ -200,6 +206,7 @@ export const TABLE_SPECS = {
       note: optional(r.note),
       completed: r.completed === true,
       ...moneyLink(r),
+      transaction_id: coveredTransaction(r.transaction_id),
       created_at: createdAt(r.created_at, d),
     };
   },
