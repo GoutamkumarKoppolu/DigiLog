@@ -2,6 +2,7 @@ node_modules
 .env
 *.log
 .claude/settings.local.json
+my-video
 
 # Android signing keys: never commit them (CI gets the key from GitHub secrets)
 *.jks
