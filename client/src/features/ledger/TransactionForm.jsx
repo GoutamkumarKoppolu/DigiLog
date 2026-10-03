@@ -47,10 +47,12 @@ function initialForm(transaction, seed) {
 // Tag field for fixed tags, for one kind of type: { id, kind, label, info,
 // description, tags: [{ tag, label }] } (e.g. "Paying a credit card bill").
 // `tagHints` explain a tag that matters for one kind of type and offer it
-// first: { kind, tag, text, info } (e.g. "Salary" for earnings).
+// first: { kind, tag, text, info } (e.g. "Salary" for earnings). `tagPicks`
+// are extra rows of tag chips for one kind: { kind, label, tags: [{ tag,
+// label, red }] } (e.g. the spending plan's tags with what's left).
 export default function TransactionForm(props) {
   const { id, transaction, transactionTypes, paymentMethods, paymentSources, existingTags, onSubmit, seed } = props;
-  const { extras = [], onPickExtra, tagGroups = [], tagHints = [] } = props;
+  const { extras = [], onPickExtra, tagGroups = [], tagHints = [], tagPicks = [] } = props;
   const [form, setForm] = useState(() => initialForm(transaction, seed));
   // undefined until the switch is touched: follows the saved tag, since
   // groups may load after the form opens.
@@ -65,6 +67,7 @@ export default function TransactionForm(props) {
   const groups = tagGroups.filter((g) => g.kind === kind && g.tags.length);
   const group = groups.find((g) => g.id === groupId);
   const hint = tagHints.find((h) => h.kind === kind);
+  const picks = tagPicks.filter((p) => p.kind === kind && p.tags.length);
   const suggestedTags = hint ? [hint.tag, ...existingTags.filter((t) => !sameTag(t, hint.tag))] : existingTags;
 
   // A group's tag only fits with the switch on, a typed tag only with it off.
@@ -171,6 +174,24 @@ export default function TransactionForm(props) {
               required
             />
           </label>
+          {picks.map((p) => (
+            <div className="field" key={p.label}>
+              <span className="field-label">{p.label}</span>
+              <div className="chip-group chip-group-scroll" role="group" aria-label={p.label}>
+                {p.tags.map((t) => (
+                  <button
+                    type="button"
+                    key={t.tag}
+                    aria-pressed={sameTag(t.tag, form.tag)}
+                    className={`chip chip-sm ${sameTag(t.tag, form.tag) ? "is-active" : ""} ${t.red ? "chip-over" : ""}`}
+                    onClick={() => set("tag", t.tag)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
           <TagSuggestions value={form.tag} tags={suggestedTags} onPick={(t) => set("tag", t)} limit={QUICK_TAG_COUNT} label="Recent tags" />
           {hint && (
             <p className="field-hint tag-hint">

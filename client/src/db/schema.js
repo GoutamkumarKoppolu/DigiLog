@@ -54,3 +54,9 @@ export const STORES_V6 = {
 export const STORES_V7 = {
   subscriptions: "++id, created_at",
 };
+
+// Version 8: spending plan (see features/spendingPlan): money set aside per
+// tag for a month, e.g. Bills ₹10,000. One amount per tag per month.
+export const STORES_V8 = {
+  spending_plans: "++id, month, &[month+tag]",
+};

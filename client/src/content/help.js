@@ -94,6 +94,25 @@ export const HELP = {
     ],
     example: "Balance ₹20,000, a ₹50,000 expense → ₹30,000 more needed: ₹10,000 from \"Emergency\" savings + ₹20,000 borrowed from Ravi. Balance ₹0, Emergency down ₹10,000, you owe Ravi ₹20,000.",
   },
+  savingsRate: {
+    title: "Savings rate",
+    body: [
+      "The share of your income you didn't spend: (income − expenses) ÷ income. Money you put into savings and money still in your balance both count as kept.",
+      "A salary counts in the month it pays for, so a salary on 30 Sep is October's. That keeps each month's rate honest instead of swinging up and down with payday.",
+      "The 12-month average weighs each month by its income. Many money managers aim for 20% or more. Tap a month in the chart to see its figures.",
+    ],
+    example: "Income ₹1,00,000, expenses ₹78,000 → you kept ₹22,000, a 22% savings rate.",
+  },
+  spendingPlan: {
+    title: "Setting money aside",
+    body: [
+      "After your salary comes in, split your usable balance across a few tags, like Bills ₹10,000 and Shopping ₹5,000. It's a plan: your balance doesn't change.",
+      "When you add an expense, the plan's tags show as their own suggestions, with what's left in each. Expenses with that tag fill its bar under Your money on Home. At 95% the bar turns red.",
+      "Spend more than you set aside and the extra comes out of your free money: the part of your usable balance you didn't set aside.",
+      "Next month, last month's tags are offered again. Keep them, change the amounts, or add new ones.",
+    ],
+    example: "Usable ₹30,000. Bills ₹10,000 + Shopping ₹5,000 → free money ₹15,000. Spend ₹6,000 on Shopping → Shopping is red, over by ₹1,000, free money ₹14,000.",
+  },
   borrowing: {
     title: "Borrowed & lent",
     body: [

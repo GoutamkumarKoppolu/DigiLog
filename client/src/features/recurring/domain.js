@@ -1,11 +1,15 @@
 // Pure rules for recurring payments (EMIs, rent, SIPs…). Each month, once the
 // Salary that pays for that month has been added and the payment's day has
-// come, it becomes a normal ledger transaction dated on that day. A "run" records that month's
-// payment (recurring_id + month → transaction_id), so each month is added at
-// most once, and deleting the transaction gives its amount back to the
-// pending balance.
+// come, it becomes a normal ledger transaction dated on that day. A "run"
+// records that month's payment (recurring_id + month → transaction_id), so
+// each month is added at most once, and deleting the transaction gives its
+// amount back to the pending balance.
 
-export const SALARY_TAG = "salary";
+// Which month a salary pays for is a core rule (also used by the spending
+// plan and the Report); re-exported for this feature's own files.
+import { isSalary, planMonth, salaryMonth, salaryMonths } from "../../domain/salary";
+export { SALARY_CUTOFF_DAY, SALARY_TAG, isSalary, planMonth, salaryMonth, salaryMonths } from "../../domain/salary";
+
 export const RECURRING_KINDS = ["expense", "saving"];
 
 const toPaise = (n) => Math.round(Number(n) * 100);
@@ -21,29 +25,6 @@ export const SALARY_HINT = {
   info: "salary",
 };
 
-export const isSalary = (t) => t.type_kind === "earning" && String(t.tag).trim().toLowerCase() === SALARY_TAG;
-
-// A month's work is paid at its end (or early the next month), and that
-// salary pays the NEXT month's bills: September's EMIs come out of the salary
-// received on 31 Aug or in the first days of September. So a salary dated on
-// or after this day pays for the next month, one before it for its own month
-// (30 Sep and 3 Oct both pay October's payments). Same day as the credit
-// card bill cutoff.
-export const SALARY_CUTOFF_DAY = 25;
-
-// The month ("YYYY-MM") whose recurring payments a salary dated `date` pays.
-export const salaryMonth = (date) =>
-  Number(date.slice(8, 10)) >= SALARY_CUTOFF_DAY ? nextMonth(date.slice(0, 7)) : date.slice(0, 7);
-
-// Months whose salary has been added.
-export const salaryMonths = (transactions) => new Set(transactions.filter(isSalary).map((t) => salaryMonth(t.date)));
-
-// The month to show: next month as soon as its salary is in (e.g. on 30 Sep,
-// October), otherwise this month.
-export function planMonth(salarySet, today) {
-  const next = nextMonth(today.slice(0, 7));
-  return salarySet.has(next) ? next : today.slice(0, 7);
-}
 
 const lastDayOf = (month) => new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
 

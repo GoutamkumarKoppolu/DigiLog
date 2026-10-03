@@ -306,6 +306,16 @@ export const TABLE_SPECS = {
       created_at: createdAt(r.created_at),
     };
   },
+  // Added in database v8. Money set aside per tag for a month.
+  spending_plans: (r, ctx) => {
+    const month = text(r.month);
+    need(/^\d{4}-\d{2}$/.test(month), "month must be YYYY-MM");
+    const tag = required(r.tag, "tag");
+    const key = `${month}:${tag.toLowerCase()}`;
+    need(!ctx.planKeys.has(key), `"${tag}" appears twice in the ${month} spending plan`);
+    ctx.planKeys.add(key);
+    return { id: id(r.id), month, tag, amount: amount(r.amount), created_at: createdAt(r.created_at) };
+  },
 };
 
 // Tables whose `name` must be unique (they have a unique index).
@@ -328,6 +338,7 @@ export const TABLE_LABELS = {
   borrow_payments: "Borrowed & lent payments",
   recurring_payments: "Recurring payments",
   recurring_runs: "Recurring payment history",
+  spending_plans: "Spending plan",
   subscriptions: "Subscriptions",
 };
 
@@ -376,7 +387,7 @@ export function parseBackup(fileText) {
 
   const problems = [];
   const tables = {};
-  const ctx = { kindByType: {}, cardIds: new Set(), budgetIds: new Set(), billFolderIds: new Set(), billIds: new Set(), borrowRecordIds: new Set(), recurringIds: new Set(), recurringRunKeys: new Set() };
+  const ctx = { kindByType: {}, cardIds: new Set(), budgetIds: new Set(), billFolderIds: new Set(), billIds: new Set(), borrowRecordIds: new Set(), recurringIds: new Set(), recurringRunKeys: new Set(), planKeys: new Set() };
   const missingTables = [];
 
   for (const [name, spec] of Object.entries(TABLE_SPECS)) {

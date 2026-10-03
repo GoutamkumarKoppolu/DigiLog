@@ -50,6 +50,8 @@ client/src/
   api.js                   Core ledger data access: transactions, options, overview, registerTransactionGuard,
                            registerMovementSource / fetchMovements
   domain/transactions.js   Pure ledger rules: kinds, balance-deduction flag, computeTotals, matchesFilters
+  domain/salary.js         Pure salary rules shared by Recurring, the spending plan and the Report: isSalary, which
+                           month a salary pays for (salaryMonth: on/after the 25th → next month), planMonth
   utils/format.js          Shared helpers: currency, compactCurrency (₹12.35L), dates, periodLabel, groupByDate
   components/
     ui/                    Design-system primitives: BottomSheet, PageHeader (collapsing large title),
@@ -57,13 +59,20 @@ client/src/
                            Money, ListRow, EmptyState, ErrorBanner, InfoButton (ⓘ → help sheet),
                            FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob),
                            AppMark (the DigiLog "Rupee trail" logo; `tile` = the app icon), TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions"),
-                           ChartTip (tap a chart column → what each mark is and its value)
+                           ChartTip (tap a chart column → what each mark is and its value),
+                           ColumnChart (legend + up to 12 tappable grouped columns; Report savings rate, Savings per month)
     MonthPicker.jsx        Years × months chip picker ("YYYY-MM"[] contract)
     PeriodSheet.jsx        MonthPicker in a bottom sheet
   features/
     ledger/                Shared ledger state (LedgerProvider + useLedger), TransactionForm/Sheet/List, kindMeta
     home/                  Home page: balance hero, "Your money" cards, FilterSheet, transaction list
-    report/                Report page: per-tag donut + breakdown, change vs previous month (pure rules in domain.js)
+    report/                Report page: savings rate card (kept ÷ income, 12-month average, income/expenses/saved per
+                           month, salaries in the month they pay for) + per-tag donut + breakdown, change vs previous
+                           month (pure rules in domain.js)
+    spendingPlan/          Money from the usable balance set aside per tag for the month on show (planMonth): set in
+                           "<Month> at glance" after a salary (SetAsideCard) or from Home; bars under Your money
+                           (PlanBars, red from 95%); the plan's tags as their own chips when adding an expense
+                           (usePlanTags → TransactionForm `tagPicks`); never changes the balance
     savings/               Savings page: pots, withdrawals, history (api.js, domain.js, index.js registers its guard)
     recurring/             Recurring payments (EMIs, rent, SIPs) + RecurringEngine (rendered once in App): when the salary
                            that pays for the month exists (earning tagged "Salary"; one dated on/after the 25th pays NEXT
@@ -134,6 +143,7 @@ client/src/
 | `borrow_payments` (v5) | `id`, `record_id`, `amount` (never more than what's left), `date`, `note`, `linked_to`, `pot` (as on records), `created_at` |
 | `recurring_payments` (v6) | `id`, `name`, `kind` (`expense` \| `saving`), `amount`, `tag`, `day` (1–31; last day in shorter months), `payment_method`, `payment_source`, `deduct_from_balance` (savings), `pending_start` / `duration` (totals, or `null`; the form shows what's *left* = total − payments made), `start_month`, `paused` / `skipped_months` (savings only), `completed` (by hand), `created_at` |
 | `recurring_runs` (v6) | `id`, `recurring_id`, `month`, `transaction_id` (may have been deleted), `created_at`; unique `[recurring_id+month]` so a month is never added twice |
+| `spending_plans` (v8) | `id`, `month` (`"YYYY-MM"`, the month the plan is for), `tag`, `amount`, `created_at`; unique `[month+tag]` (one amount per tag per month, case-insensitive in `api.js`) |
 | `subscriptions` (v7) | `id`, `name`, `amount`, `cycle` (`monthly` \| `yearly`), `day` (1–31), `month` (yearly only), `payment_method` / `category` (free text), `trial_end` (date or `null`), `remind` (`off` \| `0` \| `1` \| `3` days before), `cancelled_at` (date or `null`), `card_id` (credit card it's charged to, or `null`; missing/deleted card = none), `created_at` |
 
 Conventions in the data layer:
@@ -147,7 +157,7 @@ Conventions in the data layer:
   - Savings with `deduct_from_balance: false` (e.g. money given to you) never reduce the balance.
   - Using savings (a withdrawal) reduces savings only, never the balance, except a `to_balance` one that covered an expense (it adds to the balance as a movement). Overall Savings = all savings − withdrawals.
   - A pot can never go below zero: withdrawals are capped at the pot's remaining amount, and editing/deleting a Saving transaction that would push its pot negative is blocked.
-- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes, and `registerMovementSource(fn)` so a feature can move money in/out of the balance or pots, without the core importing the feature. The + sheet takes extra Type chips as `entries` (`{ id, label, render }`) Cards exports `registerCardEstimateSource(fn)` (Subscriptions registers its charges per card for a card's estimated bill). `tagGroups` (a switch that swaps the Tag field for fixed tags for one kind, e.g. card bills) and `tagHints` (a hint + suggested tag for one kind, e.g. "Salary" for earnings), all passed in by App, plus `onSaved(row, { created })` (App opens "<Month> at glance" after a new Salary). A page can get extra props from its `ROUTES` entry (`props`), e.g. Home's `BalanceNote` (Recurring's usable balance). Savings exports `fetchPots` / `checkPots` so a feature moving money out of a pot can't take it below zero. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
+- **Cross-feature hooks:** core `api.js` exposes `registerTransactionGuard(fn)` so a feature can veto ledger edits/deletes, and `registerMovementSource(fn)` so a feature can move money in/out of the balance or pots, without the core importing the feature. The + sheet takes extra Type chips as `entries` (`{ id, label, render }`), extra tag chip rows as `tagPicks` (`{ kind, label, tags: [{ tag, label, red }] }`, e.g. the spending plan), Cards exports `registerCardEstimateSource(fn)` (Subscriptions registers its charges per card for a card's estimated bill). `tagGroups` (a switch that swaps the Tag field for fixed tags for one kind, e.g. card bills) and `tagHints` (a hint + suggested tag for one kind, e.g. "Salary" for earnings), all passed in by App, plus `onSaved(row, { created })` (App opens "<Month> at glance" after a new Salary). A page can get extra props from its `ROUTES` entry (`props`), e.g. Home's `BalanceNote` (Recurring's usable balance). Savings exports `fetchPots` / `checkPots` so a feature moving money out of a pot can't take it below zero. Each feature wires itself up in its `features/<name>/index.js` entry point, and App imports the feature only from there.
 - There are no foreign keys in IndexedDB, so cascades are done manually inside a Dexie transaction (see `deleteCreditCard` in `features/cards/api.js`).
 - Files are stored as `Blob`s. Never `await` non-Dexie work (reading a file, making a preview, base64) inside a Dexie transaction: IndexedDB closes the transaction. Prepare it first, then write (see `createBill` in `features/bills/api.js`, `exportBackup`/`restoreBackup` in `features/backup/api.js`).
 - Option CRUD is generic over the `OPTION_KINDS` / `TABLE_BY_KIND` maps in `api.js`.
@@ -161,7 +171,7 @@ Conventions in the data layer:
 | Home: balance hero (current balance, overall savings), Income/Expenses/Saved cards for the filters, date-grouped transaction list | `features/home/HomePage.jsx`, `features/ledger/TransactionList.jsx` |
 | Filters sheet: years × months, single type (All/Earning/Expense/Saving), balance deduction (All/From balance/Not from balance) when Saving, tags | `features/home/FilterSheet.jsx`, `matchesFilters` |
 | Report: Expenses/Income/Savings toggle, donut by tag (top 7 + Other), per-tag share bars, % change vs previous month when one month is selected | `features/report/` |
-| Savings: available/used summary, from/not-from balance split, per-tag pots with progress rings, "Use savings" sheet (capped at pot remaining), history filterable by pot | `features/savings/` |
+| Savings: available/used summary, from/not-from balance split, per-tag pots with progress rings, "Use savings" sheet (capped at pot remaining), "Saved per month" chart (12 months, saved vs used, follows the picked pot), history filterable by pot | `features/savings/` |
 | Tags page (More → Tags, or "By tag" on Home): all time by default, sections Expenses → Savings → Income, each tag with count, date range, total (savings split from/not from balance); expand for its transactions by month; search; period picker | `features/tags/` |
 | Budgets (More → Budgets): events with a total, optional sub-budgets (one level, "Unallocated" / over-allocated shown), spends from a sub-budget or the whole budget, overspending shown in red, Mark as done / Reopen; never touches the balance | `features/budgets/` |
 | Bills (More → Bills): folders (one level) of bills; add a bill by camera or file picker (photos/PDFs, originals kept, ≤ 50 MB each), each file = its own bill (named after the file, editable before saving), Add pages on a bill for multi-page bills; view photos in-app, Open in the phone's viewer, Share; rename/move bills, add/delete pages, rename/delete folders; search; included in backups | `features/bills/`, `platform/files.js`, `FileViewerPlugin.java` |
@@ -171,6 +181,8 @@ Conventions in the data layer:
 | Backup & restore (More → Backup & restore): export everything (data, bill files + theme) to a JSON file (download on web; Save to phone → Documents/DigiLog, or Share, on Android); import validates the whole file, upgrades older backups, shows a summary, then replaces all data atomically | `features/backup/` |
 | Delete history (More → Delete history): Whole history (type DELETE) or One month (chips of months that have history); preview of counts, totals and per-pot change; deletes that month's transactions and savings uses in one Dexie transaction; a pot left below zero also loses its other savings uses, newest first, listed before deleting (refused only if Borrowed & lent empties it); warns that Borrowed & lent entries stay and still change the balance; budgets, bills, cards, subscriptions, borrowing untouched | `features/history/` |
 | Balance rule (everywhere): the balance can't go below ₹0; an expense or deducting saving that needs more opens "Not enough balance" (balance, amount needed, a savings pot chip + amount, borrowed from + amount, the two fill each other in, must cover it exactly, ⓘ `balanceRule`); savings used show "To balance" in pot history and as "From <pot> savings" on Home, borrowed money as a Borrowed record; deleting the expense removes them (refused if the borrowing was partly repaid); other refusals (deleting a spent salary, repaying/lending more than the balance, deleting money already spent) say why and what to do | `api.js` (`withBalanceCheck`), `features/funding/` |
+| Spending plan: after a salary, "Set money aside" splits the usable balance across tags (last month's tags offered as chips; Free money = usable − what's still set aside); Home shows "<Month> plan" bars per tag (`--cat-n`, red from 95%, "Over by ₹X, taken from your free money"); adding an expense shows "<Month> plan" chips with what's left; expenses only fill the bars, the balance works as before | `features/spendingPlan/` |
+| Savings rate (top of Report): "You kept 22% of your income in October", 12-month average, tappable 12-month income/expenses/saved columns | `features/report/SavingsRateCard.jsx` |
 | Info buttons (ⓘ) explaining balance deduction, savings, credit cards, tags, budgets and sub-budgets, bills, borrowed & lent, recurring payments, subscriptions | `components/ui/InfoButton.jsx`, `content/help.js` |
 | Credit cards: card visuals, log spend / delete per card, period picker; each card shows logged spends vs the bill paid for them over 6 months (outlined vs filled bars in the card's colour; tap a month for Matches / paid but not logged / not paid yet); a bill paid on or after the 25th counts for that month, before it for the previous month (`BILL_CUTOFF_DAY`); "Bills paid" chart + table at the bottom uses only the paid bills (palette `--cat-1..8`). Bills are expenses added with "Paying a credit card bill" on (tag "<card> bill"); deleting a card keeps them. **Estimated bill · <month> ⓘ** under a card = this month's charges of the subscriptions charged to it (monthly every month, yearly in their month, trials when they end; not logged spends) | `features/cards/`, `TransactionForm` `tagGroups` |
 | Manage options: transaction types (with kind), payment methods, payment sources | `features/settings/SettingsPage.jsx` |

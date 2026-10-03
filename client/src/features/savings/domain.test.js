@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHistory, computePots } from "./domain";
+import { buildHistory, computePots, monthlySavings } from "./domain";
 
 const saving = (id, tag, amount, deduct = true) => ({
   id,
@@ -48,5 +48,25 @@ describe("buildHistory with movements", () => {
       ["deposit", 8000],
     ]);
     expect(history[0]).toMatchObject({ title: "Move a", flow: "out", tag: "Trip" });
+  });
+});
+
+describe("saved per month", () => {
+  const dep = (tag, amount, date) => ({ ...saving(0, tag, amount), date });
+  const use = (tag, amount, date) => ({ tag, amount, date });
+
+  it("adds up what was saved and used each month, oldest first", () => {
+    const savings = [dep("Trip", 5000, "2026-08-02"), dep("Emergency", 3000, "2026-09-01"), dep("Trip", 1000, "2026-09-20")];
+    const months = monthlySavings(savings, [use("Trip", 2000, "2026-09-25")], [move("b1", "in", "Trip", 500)], "2026-09", 3);
+    expect(months).toEqual([
+      { month: "2026-07", saved: 0, used: 0 },
+      { month: "2026-08", saved: 5000, used: 0 },
+      { month: "2026-09", saved: 4500, used: 2000 },
+    ]);
+  });
+
+  it("can show one pot", () => {
+    const savings = [dep("Trip", 5000, "2026-09-02"), dep("Emergency", 3000, "2026-09-01")];
+    expect(monthlySavings(savings, [], [], "2026-09", 1, "Emergency")).toEqual([{ month: "2026-09", saved: 3000, used: 0 }]);
   });
 });

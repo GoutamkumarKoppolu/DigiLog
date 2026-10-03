@@ -11,6 +11,7 @@ import SavingsSummary from "./SavingsSummary";
 import PotList from "./PotList";
 import WithdrawalForm from "./WithdrawalForm";
 import SavingsHistory from "./SavingsHistory";
+import SavingsChart from "./SavingsChart";
 
 const WITHDRAW_FORM_ID = "withdraw-form";
 
@@ -89,6 +90,11 @@ export default function SavingsPage() {
               <span className="muted">Tap a pot to see its history</span>
             </div>
             <PotList pots={pots} selectedTag={selectedTag} onSelect={setSelectedTag} />
+
+            <div className="section-head">
+              <h2>Saved per month{selectedTag && ` · ${selectedTag}`}</h2>
+            </div>
+            <SavingsChart savings={data.savings} withdrawals={data.withdrawals} movements={data.movements} tag={selectedTag} />
 
             <div className="section-head">
               <h2>History{selectedTag && ` · ${selectedTag}`}</h2>

@@ -22,6 +22,7 @@ import { BorrowingPage, useBorrowEntries } from "./features/borrowing";
 import { MonthPlanSheet, RecurringEngine, RecurringPage, SALARY_HINT, UsableBalance, isSalary } from "./features/recurring";
 import { SubscriptionReminders, SubscriptionsPage } from "./features/subscriptions";
 import { FundingSheet } from "./features/funding";
+import { PlanBars, SetAsideCard, usePlanTags } from "./features/spendingPlan";
 
 // Page registry. `tab` is the bottom-nav tab that stays highlighted; `add`
 // shows the + (add transaction) button; `hero` means the page starts with
@@ -30,7 +31,7 @@ import { FundingSheet } from "./features/funding";
 // `props` are extra props for the page (e.g. what other features show on it).
 // Add a page here, nowhere else.
 const ROUTES = {
-  home: { page: HomePage, tab: "home", add: true, hero: true, props: { BalanceNote: UsableBalance } },
+  home: { page: HomePage, tab: "home", add: true, hero: true, props: { BalanceNote: UsableBalance, MoneyNote: PlanBars } },
   recurring: { page: RecurringPage, tab: "recurring", add: true, parent: "home" },
   report: { page: ReportPage, tab: "more", add: true, parent: "more" },
   savings: { page: SavingsPage, tab: "savings", add: true, parent: "home" },
@@ -54,11 +55,11 @@ const TABS = [
 ];
 
 // The + sheet with what other features add to it: Repay / Received chips,
-// the "Paying a credit card bill" switch, the Salary tag hint and the "Not
-// enough balance" step. A component
+// the "Paying a credit card bill" switch, the Salary tag hint, the spending
+// plan's tags and the "Not enough balance" step. A component
 // of its own because those read the ledger, which App provides.
 function AddSheet(props) {
-  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} tagHints={[SALARY_HINT]} Funding={FundingSheet} />;
+  return <TransactionSheet {...props} entries={useBorrowEntries()} tagGroups={useCardBillTags()} tagHints={[SALARY_HINT]} tagPicks={usePlanTags()} Funding={FundingSheet} />;
 }
 
 export default function App() {
@@ -97,7 +98,11 @@ export default function App() {
           />
         )}
         {splash && <Splash onDone={hideSplash} />}
-        {showPlan && <MonthPlanSheet salaryAdded onClose={() => setShowPlan(false)} onOpenRecurring={() => navigate("recurring")} />}
+        {showPlan && (
+          <MonthPlanSheet salaryAdded onClose={() => setShowPlan(false)} onOpenRecurring={() => navigate("recurring")}>
+            <SetAsideCard />
+          </MonthPlanSheet>
+        )}
       </div>
     </LedgerProvider>
   );

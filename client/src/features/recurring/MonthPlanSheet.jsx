@@ -31,7 +31,8 @@ function Line({ label, value, text, strong = false, minus = false }) {
 // and every payment that month, for the month on show (next month once its
 // salary is in). Opened from Home, and after adding a salary
 // (`salaryAdded`).
-export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRecurring }) {
+// `children` (from App) go after the salary, e.g. the spending plan.
+export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRecurring, children }) {
   const plan = useMonthPlan();
   const name = plan ? monthName(plan.month) : "";
 
@@ -102,6 +103,8 @@ export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRec
               </>
             )}
           </div>
+
+          {children}
 
           <h3 className="plan-heading">Recurring in {name}</h3>
           {plan.rows.length ? (

@@ -7,3 +7,4 @@ export { default as RecurringEngine } from "./RecurringEngine";
 export { default as UsableBalance } from "./UsableBalance";
 export { default as MonthPlanSheet } from "./MonthPlanSheet";
 export { SALARY_HINT, isSalary } from "./domain";
+export { useMonthPlan } from "./useMonthPlan";

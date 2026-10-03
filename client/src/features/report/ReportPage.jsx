@@ -9,8 +9,9 @@ import ErrorBanner from "../../components/ui/ErrorBanner";
 import PeriodSheet from "../../components/PeriodSheet";
 import { fetchTransactions } from "../../api";
 import { useLedger } from "../ledger";
-import { currency, monthLabel, periodLabel, shiftMonth } from "../../utils/format";
+import { currency, currentMonth, monthLabel, periodLabel, shiftMonth } from "../../utils/format";
 import { breakdownByTag, changePct } from "./domain";
+import SavingsRateCard from "./SavingsRateCard";
 
 const KINDS = [
   { value: "expense", label: "Expenses", noun: "expenses" },
@@ -56,6 +57,9 @@ export default function ReportPage({ navigate }) {
       <PageHeader title="Report" subtitle={`${meta.label} by tag`} onBack={() => navigate("more")} />
       <div className="page-body">
         <ErrorBanner message={error} onDismiss={() => setError("")} />
+
+        {/* The latest month picked (or this month) and the 11 before it. */}
+        <SavingsRateCard month={filters.months.length ? [...filters.months].sort().at(-1) : currentMonth()} />
 
         <SegmentedControl label="Report type" options={KINDS} value={kind} onChange={setKind} />
 
