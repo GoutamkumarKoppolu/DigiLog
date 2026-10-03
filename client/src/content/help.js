@@ -109,17 +109,19 @@ export const HELP = {
     title: "How recurring payments work",
     body: [
       "Add payments that repeat every month, like a home loan EMI, rent or a SIP, with the day they're paid. They're recorded for you: don't add them on Home yourself, even if you pay one by hand, or it's counted twice.",
-      "Once you add that month's earning with the tag \"Salary\", each payment is added to your transactions on its day and taken off your balance, like any other expense. Before its day it shows as \"Due\"; until the salary is in, \"Waiting for salary\". If the app wasn't opened on the day, it's added the next time you open it, still dated on its day.",
+      "A month's bills are paid from the salary you got for the month before: September's EMIs come out of the salary from the end of August or the first days of September. So a salary tagged \"Salary\" dated on or after the 25th pays the next month's payments, and one before the 25th pays its own month's.",
+      "Once that salary is in, each payment is added to your transactions on its day and taken off your balance, like any other expense. Before its day it shows as \"Due\"; until the salary is in, \"Waiting for salary\". If the app wasn't opened on the day, it's added the next time you open it, still dated on its day. As soon as next month's salary is in, this page shows next month.",
       "Give a pending balance or the number of payments left, and it stops by itself when it's all paid; the last payment is only what's left. For one with no end date, tap Mark as completed to stop it.",
       "Savings go into your Savings pot under their tag and follow the \"Deduct from current balance\" switch. They can be paused, or skipped for a month.",
     ],
-    example: "Home loan EMI ₹25,000 on the 5th, ₹65,000 pending. Salary on the 1st → on the 5th, ₹25,000 is added and ₹40,000 is left. Next month ₹25,000 again, then a last ₹15,000, and it's Completed.",
+    example: "Home loan EMI ₹25,000 on the 5th, ₹65,000 pending. Salary on 30 Sep → on 5 Oct, ₹25,000 is added and ₹40,000 is left. Next month ₹25,000 again, then a last ₹15,000, and it's Completed.",
   },
   salary: {
     title: "Why the \"Salary\" tag matters",
     body: [
-      "Recurring payments (EMIs, rent, SIPs) wait for your salary: they're only taken off your balance once that month's earning tagged \"Salary\" is added. Use exactly that tag for your pay, every month.",
-      "When you add it, you see the month at a glance: your salary, this month's recurring payments, and what's usable. Tap \"See breakup\" under the balance on Home to see it again.",
+      "Recurring payments (EMIs, rent, SIPs) wait for your salary: they're only taken off your balance once the salary that pays for them is added, tagged \"Salary\". Use exactly that tag for your pay, every month.",
+      "Your salary pays the next month's bills. One dated on or after the 25th counts for the next month, so a salary on 30 Sep or on 3 Oct both pay October's payments.",
+      "When you add it, you see the month it pays for at a glance: your salary, that month's recurring payments, and what's usable. Tap \"See breakup\" under the balance on Home to see it again.",
       "Usable balance is your current balance minus the payments still to be deducted this month. Payments waiting for the salary aren't counted until it's added, since they come out of it.",
     ],
     example: "Balance ₹18,000 before payday → usable ₹18,000. Add ₹80,000 tagged Salary → balance ₹98,000, EMI + rent + SIP ₹42,500 to come → usable ₹55,500, usable salary ₹37,500.",
