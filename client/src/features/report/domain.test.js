@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { averageRate, monthlyTrend } from "./domain";
-import { salaryMonth } from "../recurring/domain";
+import { salaryMonth } from "../../domain/salary";
 
 const t = (type_kind, amount, date, tag = "Misc") => ({ type_kind, amount, date, tag });
 // As in the app: a salary counts in the month it pays for.

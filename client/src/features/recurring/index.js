@@ -6,5 +6,5 @@ export { default as RecurringPage } from "./RecurringPage";
 export { default as RecurringEngine } from "./RecurringEngine";
 export { default as UsableBalance } from "./UsableBalance";
 export { default as MonthPlanSheet } from "./MonthPlanSheet";
-export { SALARY_HINT, isSalary, planMonth, salaryMonth, salaryMonths } from "./domain";
+export { SALARY_HINT, isSalary } from "./domain";
 export { useMonthPlan } from "./useMonthPlan";

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import ChartTip from "../../components/ui/ChartTip";
+import ColumnChart from "../../components/ui/ColumnChart";
 import InfoButton from "../../components/ui/InfoButton";
 import { fetchTransactions } from "../../api";
 import { useLedger } from "../ledger";
-import { isSalary, salaryMonth } from "../recurring";
+import { isSalary, salaryMonth } from "../../domain/salary";
 import { currency, monthLabel } from "../../utils/format";
 import { averageRate, monthlyTrend } from "./domain";
 
@@ -23,7 +23,6 @@ const pct = (rate) => `${Math.round(rate * 100)}%`;
 export default function SavingsRateCard({ month }) {
   const { transactions: ledgerVersion } = useLedger();
   const [rows, setRows] = useState(null);
-  const [tip, setTip] = useState(null);
 
   useEffect(() => {
     let live = true;
@@ -39,7 +38,6 @@ export default function SavingsRateCard({ month }) {
   const trend = monthlyTrend(rows, month, monthOf);
   const focus = trend[trend.length - 1];
   const average = averageRate(trend);
-  const max = Math.max(1, ...trend.flatMap((m) => SERIES.map((s) => m[s.key])));
   const name = monthLabel(month).split(" ")[0];
 
   return (
@@ -61,44 +59,17 @@ export default function SavingsRateCard({ month }) {
         {average != null && `12-month average ${pct(average)}`}
       </p>
 
-      <div className="cc-legend">
-        {SERIES.map((s) => (
-          <span className="cc-legend-item" key={s.key}>
-            <span className="cc-swatch" style={{ background: s.color }} />
-            {s.label}
-          </span>
-        ))}
-      </div>
-      <div className="cc-chart trend-chart" role="group" aria-label="Income, expenses and saved for the last 12 months">
-        {trend.map((m, i) => (
-          <button
-            type="button"
-            key={m.month}
-            className={`cc-chart-month ${tip === m.month ? "is-selected" : ""}`}
-            aria-pressed={tip === m.month}
-            aria-label={`${monthLabel(m.month)}: ${SERIES.map((s) => `${s.label} ${currency(m[s.key])}`).join(", ")}`}
-            onClick={() => setTip((t) => (t === m.month ? null : m.month))}
-          >
-            <span className="cc-chart-bars">
-              {SERIES.map((s) => (
-                <span key={s.key} className="cc-chart-bar" style={{ height: `${(m[s.key] / max) * 100}%`, background: s.color }} />
-              ))}
-            </span>
-            <span className="cc-chart-month-label">{monthLabel(m.month, "short").split(" ")[0].slice(0, 3)}</span>
-            {tip === m.month && (
-              <ChartTip
-                title={monthLabel(m.month)}
-                index={i}
-                count={trend.length}
-                lines={[
-                  ...SERIES.map((s) => ({ key: s.key, label: s.label, value: currency(m[s.key]), swatch: { background: s.color } })),
-                  { key: "rate", label: "Kept", value: m.rate == null ? "–" : pct(m.rate) },
-                ]}
-              />
-            )}
-          </button>
-        ))}
-      </div>
+      <ColumnChart
+        label="Income, expenses and saved for the last 12 months"
+        series={SERIES}
+        columns={trend.map((m) => ({
+          key: m.month,
+          label: monthLabel(m.month, "short").slice(0, 3),
+          title: monthLabel(m.month),
+          values: m,
+          extra: [{ key: "rate", label: "Kept", value: m.rate == null ? "–" : pct(m.rate) }],
+        }))}
+      />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 // Pure savings rules: pots are savings grouped by tag, reduced by
 // withdrawals. Withdrawals only reduce savings, never the current balance.
 import { deductsFromBalance } from "../../domain/transactions";
+import { shiftMonth } from "../../utils/format";
 
 // savings: ledger rows of kind "saving"; withdrawals: savings_withdrawals rows;
 // movements: money moved into or out of a pot by other features (e.g. a
@@ -94,4 +95,23 @@ export function buildHistory(savings, withdrawals, movements = [], tag = "") {
   return entries
     .filter((e) => !tag || e.tag === tag)
     .sort((a, b) => b.date.localeCompare(a.date) || String(b.created_at).localeCompare(String(a.created_at)));
+}
+
+// Money saved into and used from savings in each of the `count` months up to
+// `lastMonth`, oldest first, optionally for one pot (tag). Saved: Saving
+// transactions and movements into a pot; used: withdrawals and movements out.
+export function monthlySavings(savings, withdrawals, movements, lastMonth, count = 12, tag = "") {
+  const months = Array.from({ length: count }, (_, i) => shiftMonth(lastMonth, i - count + 1));
+  const sums = new Map(months.map((m) => [m, { saved: 0, used: 0 }]));
+  const add = (date, key, amount) => {
+    const sum = sums.get(date.slice(0, 7));
+    if (sum) sum[key] += Math.round(Number(amount) * 100);
+  };
+  const inPot = (t) => !tag || t === tag;
+  savings.filter((t) => inPot(t.tag)).forEach((t) => add(t.date, "saved", t.amount));
+  withdrawals.filter((w) => inPot(w.tag)).forEach((w) => add(w.date, "used", w.amount));
+  movements
+    .filter((m) => m.account === "savings" && inPot(m.pot))
+    .forEach((m) => add(m.date, m.flow === "in" ? "saved" : "used", m.amount));
+  return months.map((month) => ({ month, saved: sums.get(month).saved / 100, used: sums.get(month).used / 100 }));
 }

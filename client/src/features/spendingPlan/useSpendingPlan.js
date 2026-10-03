@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLedger } from "../ledger";
-import { planMonth, salaryMonths } from "../recurring";
+import { planMonth, salaryMonths } from "../../domain/salary";
 import { today } from "../../utils/format";
 import { fetchPlanData } from "./api";
 import { planProgress, previousPlan, stillSetAside } from "./domain";

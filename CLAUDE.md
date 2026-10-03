@@ -50,6 +50,8 @@ client/src/
   api.js                   Core ledger data access: transactions, options, overview, registerTransactionGuard,
                            registerMovementSource / fetchMovements
   domain/transactions.js   Pure ledger rules: kinds, balance-deduction flag, computeTotals, matchesFilters
+  domain/salary.js         Pure salary rules shared by Recurring, the spending plan and the Report: isSalary, which
+                           month a salary pays for (salaryMonth: on/after the 25th → next month), planMonth
   utils/format.js          Shared helpers: currency, compactCurrency (₹12.35L), dates, periodLabel, groupByDate
   components/
     ui/                    Design-system primitives: BottomSheet, PageHeader (collapsing large title),
@@ -57,7 +59,8 @@ client/src/
                            Money, ListRow, EmptyState, ErrorBanner, InfoButton (ⓘ → help sheet),
                            FormSheet (a form in a sheet: submit + optional Delete), BlobImage (<img> for a stored Blob),
                            AppMark (the DigiLog "Rupee trail" logo; `tile` = the app icon), TagSuggestions (in-app tag chips; never <datalist>, see "No browser suggestions"),
-                           ChartTip (tap a chart column → what each mark is and its value)
+                           ChartTip (tap a chart column → what each mark is and its value),
+                           ColumnChart (legend + up to 12 tappable grouped columns; Report savings rate, Savings per month)
     MonthPicker.jsx        Years × months chip picker ("YYYY-MM"[] contract)
     PeriodSheet.jsx        MonthPicker in a bottom sheet
   features/
@@ -168,7 +171,7 @@ Conventions in the data layer:
 | Home: balance hero (current balance, overall savings), Income/Expenses/Saved cards for the filters, date-grouped transaction list | `features/home/HomePage.jsx`, `features/ledger/TransactionList.jsx` |
 | Filters sheet: years × months, single type (All/Earning/Expense/Saving), balance deduction (All/From balance/Not from balance) when Saving, tags | `features/home/FilterSheet.jsx`, `matchesFilters` |
 | Report: Expenses/Income/Savings toggle, donut by tag (top 7 + Other), per-tag share bars, % change vs previous month when one month is selected | `features/report/` |
-| Savings: available/used summary, from/not-from balance split, per-tag pots with progress rings, "Use savings" sheet (capped at pot remaining), history filterable by pot | `features/savings/` |
+| Savings: available/used summary, from/not-from balance split, per-tag pots with progress rings, "Use savings" sheet (capped at pot remaining), "Saved per month" chart (12 months, saved vs used, follows the picked pot), history filterable by pot | `features/savings/` |
 | Tags page (More → Tags, or "By tag" on Home): all time by default, sections Expenses → Savings → Income, each tag with count, date range, total (savings split from/not from balance); expand for its transactions by month; search; period picker | `features/tags/` |
 | Budgets (More → Budgets): events with a total, optional sub-budgets (one level, "Unallocated" / over-allocated shown), spends from a sub-budget or the whole budget, overspending shown in red, Mark as done / Reopen; never touches the balance | `features/budgets/` |
 | Bills (More → Bills): folders (one level) of bills; add a bill by camera or file picker (photos/PDFs, originals kept, ≤ 50 MB each), each file = its own bill (named after the file, editable before saving), Add pages on a bill for multi-page bills; view photos in-app, Open in the phone's viewer, Share; rename/move bills, add/delete pages, rename/delete folders; search; included in backups | `features/bills/`, `platform/files.js`, `FileViewerPlugin.java` |

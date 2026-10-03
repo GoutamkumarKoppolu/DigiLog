@@ -2899,21 +2899,21 @@ button.list-row:active {
   margin: 0;
 }
 
-/* Twelve narrow, tall columns (the whole column is the tap target). */
-.trend-chart {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+/* components/ui/ColumnChart: up to twelve narrow, tall columns (the whole
+   column is the tap target); the column count is set inline. */
+.column-chart {
   gap: 2px;
 }
 
-.trend-chart .cc-chart-month {
+.column-chart .cc-chart-month {
   padding: 6px 0;
 }
 
-.trend-chart .cc-chart-bars {
+.column-chart .cc-chart-bars {
   gap: 1px;
   height: 120px;
 }
 
-.trend-chart .cc-chart-month-label {
+.column-chart .cc-chart-month-label {
   font-size: 10.5px;
 }
