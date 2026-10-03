@@ -1,8 +1,6 @@
-
-
-https://github.com/user-attachments/assets/9731c98e-6896-469d-b651-b1870af14179
-
-
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/9731c98e-6896-469d-b651-b1870af14179" controls width="320"></video>
+</p>
 
 <p align="center"><img src="docs/icon.png" width="96" alt="DigiLog icon: a white rupee sign leaving a trail of dots, on a green rounded square" /></p>
 
