@@ -9,19 +9,20 @@
   --surface: #ffffff;
   --surface-2: #f6f5fb;
   --text: #1c1b22;
-  --text-muted: #85839a;
+  --text-muted: #6a687f; /* ≥ 4.5:1 on --bg, --surface and --surface-2 */
   --border: #ebe9f3;
 
   /* Accent tokens (--accent*, --on-accent, --hero-*) come from
      theme/palettes.css. */
   --on-hero: #ffffff;
 
-  --positive: #15803d;
+  /* Text colours keep >= 4.5:1 on their -soft background and on --surface. */
+  --positive: #137a39;
   --positive-soft: #e7f6ec;
-  --negative: #e11d48;
+  --negative: #d01a42;
   --negative-soft: #fdebef;
   --on-negative: #ffffff;
-  --savings: #2563eb;
+  --savings: #2159d6;
   --savings-soft: #e8effe;
   --warning: #c2410c;
   --warning-soft: #fdeee4;
