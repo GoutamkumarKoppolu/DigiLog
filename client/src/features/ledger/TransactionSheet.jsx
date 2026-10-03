@@ -13,12 +13,12 @@ const FORM_ID = "transaction-form";
 // Add (transaction = null) or edit/delete a ledger transaction. When adding,
 // `entries` from other features show as extra Type chips (e.g. Repay); each
 // renders its own form: { id, label, render({ formId, amount, kindChips,
-// onDone, onError }) }. `tagGroups` / `tagHints` go to TransactionForm.
+// onDone, onError }) }. `tagGroups` / `tagHints` / `tagPicks` go to TransactionForm.
 // `onSaved(row, { created })` gets the saved transaction (with `type_kind`)
 // after the sheet closes, e.g. to follow a new salary with its summary.
 // `Funding` (a component) asks where the rest came from when a transaction
 // needs more than the balance has; without it, the save is just refused.
-export default function TransactionSheet({ transaction, entries = [], tagGroups = [], tagHints = [], Funding, onSaved, onClose }) {
+export default function TransactionSheet({ transaction, entries = [], tagGroups = [], tagHints = [], tagPicks = [], Funding, onSaved, onClose }) {
   const { options, tags, overview, error, setError, saveTransaction, removeTransaction, refresh } = useLedger();
   // { data, short } while the Funding sheet is open on top.
   const [funding, setFunding] = useState(null);
@@ -120,6 +120,7 @@ export default function TransactionSheet({ transaction, entries = [], tagGroups 
             extras={extras}
             tagGroups={tagGroups}
             tagHints={tagHints}
+            tagPicks={tagPicks}
             onPickExtra={(extra, amount) => switchTo({ extra, type: "", amount })}
           />
         )}

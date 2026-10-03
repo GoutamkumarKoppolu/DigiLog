@@ -2793,3 +2793,127 @@ button.list-row:active {
   background: var(--warning-soft);
   color: var(--text);
 }
+
+/* ---------- Spending plan (features/spendingPlan) ---------- */
+
+.plan-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.plan-bars-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan-bars-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.plan-bars-start {
+  align-self: flex-start;
+  min-height: 44px;
+}
+
+.plan-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-bar-head {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.plan-bar-sub {
+  font-size: 12.5px;
+}
+
+.plan-edit-row,
+.plan-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-edit-row {
+  padding: 10px 12px 10px 16px;
+}
+
+.plan-edit-row + .plan-edit-row {
+  border-top: 1px solid var(--border);
+}
+
+.plan-edit-amount {
+  flex: 0 0 110px;
+  width: 110px;
+}
+
+.plan-add-row .input:first-child {
+  flex: 1;
+}
+
+.plan-add-btn {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.chip-over {
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
+/* ---------- Savings rate (features/report) ---------- */
+
+.savings-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.savings-rate-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.savings-rate-headline {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.savings-rate-headline strong {
+  font-size: 26px;
+}
+
+.savings-rate-sub {
+  margin: 0;
+}
+
+/* Twelve narrow, tall columns (the whole column is the tap target). */
+.trend-chart {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.trend-chart .cc-chart-month {
+  padding: 6px 0;
+}
+
+.trend-chart .cc-chart-bars {
+  gap: 1px;
+  height: 120px;
+}
+
+.trend-chart .cc-chart-month-label {
+  font-size: 10.5px;
+}
