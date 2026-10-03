@@ -1,6 +1,6 @@
 // Pure rules for recurring payments (EMIs, rent, SIPs…). Each month, once the
-// month's Salary has been added and the payment's day has come, it becomes a
-// normal ledger transaction dated on that day. A "run" records that month's
+// Salary that pays for that month has been added and the payment's day has
+// come, it becomes a normal ledger transaction dated on that day. A "run" records that month's
 // payment (recurring_id + month → transaction_id), so each month is added at
 // most once, and deleting the transaction gives its amount back to the
 // pending balance.
@@ -17,14 +17,33 @@ const pad2 = (n) => String(n).padStart(2, "0");
 export const SALARY_HINT = {
   kind: "earning",
   tag: "Salary",
-  text: "Is this your salary? Tag it \"Salary\". Recurring payments (EMIs, rent, SIPs) are only deducted once it's added.",
+  text: "Is this your salary? Tag it \"Salary\". It pays the next month's EMIs, rent and SIPs: a salary on 30 Sep or 3 Oct pays October's.",
   info: "salary",
 };
 
 export const isSalary = (t) => t.type_kind === "earning" && String(t.tag).trim().toLowerCase() === SALARY_TAG;
 
-// Months ("YYYY-MM") in which a Salary earning has been added.
-export const salaryMonths = (transactions) => new Set(transactions.filter(isSalary).map((t) => t.date.slice(0, 7)));
+// A month's work is paid at its end (or early the next month), and that
+// salary pays the NEXT month's bills: September's EMIs come out of the salary
+// received on 31 Aug or in the first days of September. So a salary dated on
+// or after this day pays for the next month, one before it for its own month
+// (30 Sep and 3 Oct both pay October's payments). Same day as the credit
+// card bill cutoff.
+export const SALARY_CUTOFF_DAY = 25;
+
+// The month ("YYYY-MM") whose recurring payments a salary dated `date` pays.
+export const salaryMonth = (date) =>
+  Number(date.slice(8, 10)) >= SALARY_CUTOFF_DAY ? nextMonth(date.slice(0, 7)) : date.slice(0, 7);
+
+// Months whose salary has been added.
+export const salaryMonths = (transactions) => new Set(transactions.filter(isSalary).map((t) => salaryMonth(t.date)));
+
+// The month to show: next month as soon as its salary is in (e.g. on 30 Sep,
+// October), otherwise this month.
+export function planMonth(salarySet, today) {
+  const next = nextMonth(today.slice(0, 7));
+  return salarySet.has(next) ? next : today.slice(0, 7);
+}
 
 const lastDayOf = (month) => new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
 
@@ -96,12 +115,12 @@ export function duePayments(items, runs, txById, salarySet, today) {
   return out;
 }
 
-// Where a payment stands this month, for the Recurring page.
+// Where a payment stands in `month` (default: this month), for the Recurring
+// page.
 //   deducted · removed (its transaction was deleted) · due (salary in, date to
 //   come) · waiting (no salary yet) · skipped · paused · starts (later month) ·
 //   completed
-export function monthStatus(item, prog, salarySet, today) {
-  const month = today.slice(0, 7);
+export function monthStatus(item, prog, salarySet, today, month = today.slice(0, 7)) {
   const date = dueDate(month, item.day);
   const run = prog.history.find((r) => r.month === month);
   if (run) return run.transaction ? { state: "deducted", date: run.transaction.date, amount: run.transaction.amount } : { state: "removed", date };
@@ -146,22 +165,23 @@ const PLAN_STATES = ["due", "waiting", "deducted"];
 // Upcoming first (they're what's still to come), then what's been paid.
 const PLAN_ORDER = { due: 0, waiting: 0, deducted: 1 };
 
-// The month's salary, every recurring payment that comes out of the balance
-// this month, and what's usable:
+// For the month on show (planMonth: next month once its salary is in): its
+// salary, every recurring payment that comes out of the balance that month,
+// and what's usable:
 //   usable salary  = salary − all of this month's payments (paid or not)
 //   usable balance = balance − payments still to be deducted
 // Payments waiting for the salary aren't taken off the balance: they come out
 // of the salary when it's added. Savings that don't come from the balance
 // are left out, since they never reduce it.
 export function monthPlan(items, runs, transactions, balance, today) {
-  const month = today.slice(0, 7);
   const txById = new Map(transactions.map((t) => [t.id, t]));
   const salarySet = salaryMonths(transactions);
-  const salaries = transactions.filter((t) => isSalary(t) && t.date.slice(0, 7) === month);
+  const month = planMonth(salarySet, today);
+  const salaries = transactions.filter((t) => isSalary(t) && salaryMonth(t.date) === month);
 
   const rows = items
     .filter((item) => item.kind !== "saving" || item.deduct_from_balance !== false)
-    .map((item) => ({ item, status: monthStatus(item, progress(item, runs, txById), salarySet, today) }))
+    .map((item) => ({ item, status: monthStatus(item, progress(item, runs, txById), salarySet, today, month) }))
     .filter(({ status }) => PLAN_STATES.includes(status.state))
     .map(({ item, status }) => ({ id: item.id, name: item.name, kind: item.kind, amount: Number(status.amount), date: status.date, state: status.state }))
     .sort((a, b) => PLAN_ORDER[a.state] - PLAN_ORDER[b.state] || a.date.localeCompare(b.date));

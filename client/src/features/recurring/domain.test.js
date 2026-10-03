@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { dueDate, duePayments, firstMonth, lastPaymentMonth, monthPlan, monthStatus, monthTotals, progress, salaryMonths } from "./domain";
+import {
+  dueDate,
+  duePayments,
+  firstMonth,
+  lastPaymentMonth,
+  monthPlan,
+  monthStatus,
+  monthTotals,
+  planMonth,
+  progress,
+  salaryMonth,
+  salaryMonths,
+} from "./domain";
 
 const salary = (date, id = 900) => ({ id, type_kind: "earning", tag: "Salary", amount: 85000, date });
 const emi = (extra = {}) => ({
@@ -191,5 +203,39 @@ describe("monthPlan", () => {
       emi({ id: 7, name: "Later", start_month: "2026-12" }),
     ];
     expect(monthPlan(more, [], [], 1000, "2026-10-01").rows).toEqual([]);
+  });
+});
+
+describe("which month a salary pays for", () => {
+  it("pays the next month from the 25th, its own month before that", () => {
+    expect(salaryMonth("2026-09-30")).toBe("2026-10");
+    expect(salaryMonth("2026-09-25")).toBe("2026-10");
+    expect(salaryMonth("2026-10-03")).toBe("2026-10");
+    expect(salaryMonth("2026-09-24")).toBe("2026-09");
+    expect(salaryMonth("2026-12-31")).toBe("2027-01");
+  });
+
+  it("shows next month as soon as its salary is in", () => {
+    expect(planMonth(salaryMonths([salary("2026-09-30")]), "2026-09-30")).toBe("2026-10");
+    expect(planMonth(salaryMonths([salary("2026-08-31")]), "2026-09-30")).toBe("2026-09");
+  });
+
+  it("salary on 30 Sep: October's payments are due, not waiting, and added on their day", () => {
+    const item = emi({ start_month: "2026-10" });
+    const txs = [salary("2026-09-30")];
+    expect(monthStatus(item, progress(item, [], map(txs)), salaryMonths(txs), "2026-09-30", "2026-10")).toMatchObject({ state: "due" });
+    expect(due([item], [], txs, "2026-10-04")).toEqual([]);
+    expect(due([item], [], txs, "2026-10-05").map((d) => d.date)).toEqual(["2026-10-05"]);
+  });
+
+  it("September's bills come out of the salary from the end of August", () => {
+    const item = emi({ start_month: "2026-09" });
+    expect(due([item], [], [salary("2026-08-31")], "2026-09-05").map((d) => d.month)).toEqual(["2026-09"]);
+    expect(due([item], [], [salary("2026-09-30")], "2026-09-30")).toEqual([]);
+  });
+
+  it("the month at a glance after adding the salary on 30 Sep is October", () => {
+    const plan = monthPlan([emi({ start_month: "2026-10" })], [], [salary("2026-09-30")], 85000, "2026-09-30");
+    expect(plan).toMatchObject({ month: "2026-10", salary: 85000, stillToDeduct: 25000, usableBalance: 60000, usableSalary: 60000 });
   });
 });

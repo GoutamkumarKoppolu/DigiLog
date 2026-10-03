@@ -6,7 +6,7 @@ import ErrorBanner from "../../components/ui/ErrorBanner";
 import FormSheet from "../../components/ui/FormSheet";
 import Money from "../../components/ui/Money";
 import { useLedger } from "../ledger";
-import { currency, today as todayDate } from "../../utils/format";
+import { currency, monthLabel, today as todayDate } from "../../utils/format";
 import {
   createRecurring,
   deleteRecurring,
@@ -17,17 +17,17 @@ import {
   setSkipped,
   updateRecurring,
 } from "./api";
-import { monthStatus, monthTotals, progress, salaryMonths } from "./domain";
+import { monthStatus, monthTotals, planMonth, progress, salaryMonths } from "./domain";
 import RecurringCard from "./RecurringCard";
 import RecurringForm from "./RecurringForm";
 
 const FORM_ID = "recurring-form";
 
-// Sections by this month's state, in page order.
+// Sections by the shown month's state, in page order.
 const SECTIONS = [
-  { title: "Coming up", states: ["due", "waiting"] },
-  { title: "Deducted this month", states: ["deducted"] },
-  { title: "Not this month", states: ["starts", "skipped", "paused", "removed"] },
+  { title: () => "Coming up", states: ["due", "waiting"] },
+  { title: (name) => `Deducted in ${name}`, states: ["deducted"] },
+  { title: (name) => `Not in ${name}`, states: ["starts", "skipped", "paused", "removed"] },
 ];
 
 // Recurring payments (EMIs, rent, SIPs). Each becomes a normal transaction
@@ -80,14 +80,17 @@ export default function RecurringPage() {
 
   const txById = new Map(data.transactions.map((t) => [t.id, t]));
   const salarySet = salaryMonths(data.transactions);
+  // Next month as soon as its salary is in (on 30 Sep, October).
+  const month = planMonth(salarySet, today);
+  const monthName = monthLabel(month).split(" ")[0];
   const entries = data.items
     .map((item) => {
       const prog = progress(item, data.runs, txById);
-      return { item, prog, status: monthStatus(item, prog, salarySet, today) };
+      return { item, prog, status: monthStatus(item, prog, salarySet, today, month) };
     })
     .sort((a, b) => a.item.day - b.item.day || a.item.name.localeCompare(b.item.name));
   const totals = monthTotals(entries.map((e) => e.status));
-  const salaryIn = salarySet.has(today.slice(0, 7));
+  const salaryIn = salarySet.has(month);
   const completed = entries.filter((e) => e.status.state === "completed");
 
   async function handleSave(form) {
@@ -119,6 +122,7 @@ export default function RecurringPage() {
       key={entry.item.id}
       entry={entry}
       today={today}
+      month={month}
       open={openId === entry.item.id}
       onToggle={() => setOpenId(openId === entry.item.id ? null : entry.item.id)}
       onEdit={(e) => {
@@ -141,24 +145,24 @@ export default function RecurringPage() {
         <p className="callout">
           <Info size={16} aria-hidden="true" />
           <span>
-            Recorded for you on their day, once you add the month&apos;s earning tagged <strong>Salary</strong>. Don&apos;t add them on Home
-            yourself, even if you pay by hand.
+            Recorded for you on their day, once the salary that pays for them is in, tagged <strong>Salary</strong>. A salary from
+            the 25th on pays next month&apos;s. Don&apos;t add them on Home yourself, even if you pay by hand.
           </span>
         </p>
 
         {entries.length > 0 && (
           <div className="card savings-summary">
-            <span className="muted">Coming up this month</span>
+            <span className="muted">Coming up in {monthName}</span>
             <div className="savings-summary-amount">
               <Money value={totals.upcoming} className="big-amount" />
             </div>
             <div className="mini-stats">
               <div>
-                <span className="muted">Deducted this month</span>
+                <span className="muted">Deducted in {monthName}</span>
                 <strong>{currency(totals.deducted)}</strong>
               </div>
               <div>
-                <span className="muted">This month's salary</span>
+                <span className="muted">Salary for {monthName}</span>
                 <strong className={salaryIn ? "text-positive" : ""}>{salaryIn ? "Received" : "Not added yet"}</strong>
               </div>
             </div>
@@ -189,9 +193,9 @@ export default function RecurringPage() {
               const list = entries.filter((e) => s.states.includes(e.status.state));
               if (!list.length) return null;
               return (
-                <section key={s.title} className="tag-section">
+                <section key={s.states[0]} className="tag-section">
                   <div className="section-head">
-                    <h2>{s.title}</h2>
+                    <h2>{s.title(monthName)}</h2>
                   </div>
                   <div className="budget-list">{list.map(card)}</div>
                 </section>
