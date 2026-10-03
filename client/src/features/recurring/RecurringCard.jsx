@@ -14,24 +14,25 @@ const STATUS = {
   // A due day that has passed means the balance couldn't cover it yet.
   due: (s, today) => (s.date <= today ? [`Not enough balance · due ${shortDate(s.date)}`, "negative"] : [`Due on ${shortDate(s.date)}`, "warning"]),
   waiting: (s) => [`Waiting for salary · ${shortDate(s.date)}`, "accent"],
-  removed: () => ["Deleted this month", "negative"],
+  removed: (s, today, name) => [`Deleted for ${name}`, "negative"],
   starts: (s) => [`Starts ${shortDate(s.date)}`, "accent"],
-  skipped: () => ["Skipped this month", "accent"],
+  skipped: (s, today, name) => [`Skipped for ${name}`, "accent"],
   paused: () => ["Paused", "warning"],
   completed: () => ["Completed", "positive"],
 };
 
-// One recurring payment: what it is, where it stands this month, progress;
+// One recurring payment: what it is, where it stands in `month` (the one on
+// show), progress;
 // expands to details, month-by-month history and actions.
-export default function RecurringCard({ entry, today, open, onToggle, onEdit, onDelete, onSetCompleted, onSetPaused, onSetSkipped }) {
+export default function RecurringCard({ entry, today, month, open, onToggle, onEdit, onDelete, onSetCompleted, onSetPaused, onSetSkipped }) {
   const { item, prog, status } = entry;
-  const [label, tone] = STATUS[status.state](status, today);
+  const monthName = monthLabel(month).split(" ")[0];
+  const [label, tone] = STATUS[status.state](status, today, monthName);
   const Icon = item.kind === "saving" ? PiggyBank : Repeat;
   const total = prog.remaining != null ? prog.paid + prog.remaining : item.duration;
   const done = prog.remaining != null ? prog.paid : prog.paidCount;
   const share = total ? Math.min(1, done / total) : null;
   const last = lastPaymentMonth(item, prog, today);
-  const month = today.slice(0, 7);
   const isSaving = item.kind === "saving";
   const canSkip = isSaving && !item.paused && !prog.completed && ["due", "waiting", "skipped"].includes(status.state);
 
@@ -122,7 +123,7 @@ export default function RecurringCard({ entry, today, open, onToggle, onEdit, on
               {canSkip && (
                 <button type="button" className="btn btn-soft btn-block" onClick={() => onSetSkipped(item, month, status.state !== "skipped")}>
                   {status.state === "skipped" ? <Undo2 size={18} /> : <SkipForward size={18} />}
-                  {status.state === "skipped" ? "Undo skip" : "Skip this month"}
+                  {status.state === "skipped" ? "Undo skip" : `Skip ${monthName}`}
                 </button>
               )}
             </div>

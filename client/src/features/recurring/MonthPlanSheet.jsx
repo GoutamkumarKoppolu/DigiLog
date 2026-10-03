@@ -27,8 +27,9 @@ function Line({ label, value, text, strong = false, minus = false }) {
 }
 
 // "<Month> at glance": usable balance (what's left to spend now), usable
-// salary (what's left of the salary after this month's recurring payments)
-// and every payment this month. Opened from Home, and after adding a salary
+// salary (what's left of the salary after the month's recurring payments)
+// and every payment that month, for the month on show (next month once its
+// salary is in). Opened from Home, and after adding a salary
 // (`salaryAdded`).
 export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRecurring }) {
   const plan = useMonthPlan();
@@ -69,7 +70,7 @@ export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRec
           <div className="plan-hero">
             <span className="muted">Usable balance</span>
             <Money value={plan.usableBalance} className="big-amount" />
-            <span className="muted">What&apos;s left to spend after this month&apos;s recurring payments.</span>
+            <span className="muted">What&apos;s left to spend after {name}&apos;s recurring payments.</span>
           </div>
 
           <div className="card plan-card">
@@ -96,13 +97,13 @@ export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRec
             ) : (
               <>
                 <Line label={`${name} salary`} value={plan.salary} />
-                <Line label="Recurring this month" value={plan.total} minus />
+                <Line label={`Recurring in ${name}`} value={plan.total} minus />
                 <Line label="Usable salary" value={plan.usableSalary} strong />
               </>
             )}
           </div>
 
-          <h3 className="plan-heading">Recurring this month</h3>
+          <h3 className="plan-heading">Recurring in {name}</h3>
           {plan.rows.length ? (
             <div className="card card-list">
               {plan.rows.map((r) => (
@@ -119,7 +120,7 @@ export default function MonthPlanSheet({ salaryAdded = false, onClose, onOpenRec
               ))}
             </div>
           ) : (
-            <p className="muted">No recurring payments this month.</p>
+            <p className="muted">No recurring payments in {name}.</p>
           )}
         </div>
       )}
