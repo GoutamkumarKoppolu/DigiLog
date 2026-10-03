@@ -1,12 +1,15 @@
-import { ChartPie, CreditCard, DatabaseBackup, Handshake, Palette, ReceiptText, Settings, ShieldCheck, Tags, Tv, Wallet } from "lucide-react";
+import { useState } from "react";
+import { ChartPie, CreditCard, DatabaseBackup, Handshake, History, Palette, ReceiptText, Settings, ShieldCheck, Tags, Tv, Wallet } from "lucide-react";
 import { useTheme } from "../../theme/useTheme";
 import { ACCENTS, BACKGROUNDS } from "../../theme/palettes";
 import PageHeader from "../../components/ui/PageHeader";
 import ListRow from "../../components/ui/ListRow";
+import { DeleteHistorySheet } from "../history";
 
 export default function MorePage({ navigate }) {
   const { theme } = useTheme();
   const label = (list, id) => list.find((x) => x.id === id).label;
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <>
@@ -83,6 +86,13 @@ export default function MorePage({ navigate }) {
             onClick={() => navigate("backup")}
           />
           <ListRow
+            icon={History}
+            tone="negative"
+            title="Delete history"
+            subtitle="Clear one month, or your whole money history"
+            onClick={() => setDeleting(true)}
+          />
+          <ListRow
             icon={ShieldCheck}
             tone="positive"
             title="Stored on this device"
@@ -90,6 +100,7 @@ export default function MorePage({ navigate }) {
           />
         </div>
       </div>
+      {deleting && <DeleteHistorySheet navigate={navigate} onClose={() => setDeleting(false)} />}
     </>
   );
 }
