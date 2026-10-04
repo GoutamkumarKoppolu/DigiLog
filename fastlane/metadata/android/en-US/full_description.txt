@@ -1,0 +1,20 @@
+DigiLog is a private money tracker built for one-handed use. Everything stays on your phone: no account, no server, no ads, no trackers and no SMS permissions. It works fully offline.
+
+<b>What it does</b>
+<ul>
+<li><b>Transactions:</b> earnings, expenses and savings with tags, notes, payment method and source. Filter by month, type and tag.</li>
+<li><b>Savings pots:</b> savings grouped by tag. Use savings from a pot, never below zero.</li>
+<li><b>Recurring:</b> EMIs, rent and SIPs are added automatically on their day once the month's salary is in. Home shows your usable balance.</li>
+<li><b>Spending plan:</b> after a salary, set money aside per tag and watch the bars fill as you spend.</li>
+<li><b>Credit cards:</b> log what you buy on each card, pay the bill as an expense, and compare logged vs paid month by month.</li>
+<li><b>Borrowed &amp; lent:</b> who owes whom, paid back in parts.</li>
+<li><b>Budgets:</b> a total for an event (a wedding, a new car) with sub-budgets and spends.</li>
+<li><b>Bills:</b> photos and PDFs of bills and warranties in folders.</li>
+<li><b>Subscriptions:</b> monthly and yearly costs, free trials and reminders before each renewal.</li>
+<li><b>Insights:</b> a report by tag, your savings rate and a Tags page across all time.</li>
+<li><b>Your data:</b> back up and restore everything to one file. Themes: System, Light, Dark or Black, with 6 accent colours.</li>
+</ul>
+
+Your balance never goes below zero: if an expense needs more than you have, DigiLog asks whether the rest came from savings or borrowed money.
+
+Free and open source under GPL-3.0.

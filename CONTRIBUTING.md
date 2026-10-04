@@ -15,8 +15,6 @@ npm run dev     # http://localhost:5173
 
 You don't need a server, a database or a `.env` file. To start with fresh data, delete the `expense-tracker` IndexedDB database in your browser's DevTools (Application → IndexedDB).
 
-Ignore `server/`. It's an old API kept for reference, and the app doesn't use it.
-
 ## Before you open a pull request
 
 Run these in `client/`:

@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-**DigiLog** ("Track to the tail"; repo GoutamkumarKoppolu/DigiLog, internal id `com.goutam.expensetracker`, never change it or updates stop installing) is a personal money tracker that runs **fully offline, on-device**. It's a React (Vite) single-page app that stores everything in IndexedDB via Dexie, and it's also packaged as an Android app with Capacitor. There is **no backend in use**. `server/` is a legacy Express + Postgres API kept only for reference. Don't add features to it or make the client depend on it.
+**DigiLog** ("Track to the tail"; repo GoutamkumarKoppolu/DigiLog, internal id `com.goutam.expensetracker`, never change it or updates stop installing) is a personal money tracker that runs **fully offline, on-device**. It's a React (Vite) single-page app that stores everything in IndexedDB via Dexie, and it's also packaged as an Android app with Capacitor. There is **no backend**. An old Express + Postgres API was moved to the `archive/server` branch; never make the client depend on a server.
 
 Stack: React 19, Vite 8, Dexie 4, Capacitor 7 (Android), oxlint. Plain JavaScript/JSX (no TypeScript), plain CSS (no UI framework, no router, no state library). Unit tests use Vitest and cover the pure rules (`*.test.js` next to the code).
 
@@ -31,8 +31,6 @@ No `.env`, database, or server is needed. To reset local data, delete the `expen
 - Local (needs Android Studio): `cd client && npm run cap:sync && npx cap open android`.
 - `client/android/` is Capacitor-generated. Commit it as-is and avoid hand-editing it unless a native change is really required. The local plugins (`SystemBarsPlugin`, `FileViewerPlugin`) are registered in `MainActivity`. `MainActivity` also (1) replaces Capacitor's edge-to-edge insets listener with one that lifts the WebView above the keyboard (Android 15 no longer resizes for it, so sheets were hidden), and (2) sends the Back button to `window.appHandleBack()` (`app/useBackButton.js`) instead of closing the app. `FileViewerPlugin` opens a file from the cache folder with `ACTION_VIEW` through the existing FileProvider (`res/xml/file_paths.xml`); JS falls back to the share sheet if it fails.
 - **Status bar / navigation bar (Android 15+ edge-to-edge):** `capacitor.config.json` sets `android.adjustMarginsForEdgeToEdge: "auto"`, so Android insets the WebView below the status bar and above the nav bar natively (don't rely on `env(safe-area-inset-*)`, which older Android WebViews report as 0). The strips behind the bars are coloured by the local `SystemBarsPlugin.java` (registered in `MainActivity`), driven from `app/useSystemBars.js`: hero colour on pages with `hero: true` in `ROUTES`, page background elsewhere, bottom nav colour at the bottom, with icons light/dark to stay readable. Keep the CSS `env(safe-area-inset-*)` padding too, for iOS and browsers.
-
-**Legacy server (optional, not used by the app):** see README. `cd server && cp .env.example .env && npm install && npm start` against a Postgres DB created from `server/schema.sql`.
 
 ## Architecture
 

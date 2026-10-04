@@ -76,8 +76,6 @@ For the Android project locally (needs Android Studio): `npm run cap:sync && npx
 
 React 19 · Vite 8 · Dexie 4 (IndexedDB) · Capacitor 7 · plain CSS · Vitest. Each feature lives in `client/src/features/<name>/`. See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute, and the [architecture notes](CLAUDE.md#architecture) for how the code is organised.
 
-`server/` is a legacy Express + PostgreSQL API kept for reference only; the app doesn't use it.
-
 ## FAQ
 
 **Is it free? Are there ads?**
@@ -116,7 +114,7 @@ Monthly per-tag limits · separate bank/cash accounts · app lock · automatic b
 
 ## Contributing
 
-Ideas, bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and [SECURITY.md](SECURITY.md) to report a security problem privately.
+Ideas, bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, [SECURITY.md](SECURITY.md) to report a security problem privately, and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License
 

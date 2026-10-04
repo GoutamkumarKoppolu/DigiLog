@@ -21,6 +21,12 @@ android {
     // over the old one (Android refuses updates signed with another key, and
     // uninstalling wipes the app's data). CI provides the key from GitHub
     // secrets; without them a release build is simply left unsigned.
+    // Leave out Google's encrypted dependency report: only Play can read it,
+    // and IzzyOnDroid / F-Droid reject APKs that carry it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     signingConfigs {
         release {
             def keystore = System.getenv("ANDROID_KEYSTORE_FILE")
