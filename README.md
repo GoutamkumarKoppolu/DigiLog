@@ -10,6 +10,7 @@ A private, offline money tracker for Android and the web, built for one-handed u
 Everything stays on your phone: no account, no server, no ads, no SMS permissions.
 
 [![Downloads](https://img.shields.io/github/downloads/GoutamkumarKoppolu/DigiLog/total?label=downloads&color=6d48ef)](https://github.com/GoutamkumarKoppolu/DigiLog/releases)
+[![CI](https://github.com/GoutamkumarKoppolu/DigiLog/actions/workflows/ci.yml/badge.svg)](https://github.com/GoutamkumarKoppolu/DigiLog/actions/workflows/ci.yml)
 
 **[⬇ Download the Android app (APK)](https://github.com/GoutamkumarKoppolu/DigiLog/releases/latest/download/digilog.apk)** · [All releases](https://github.com/GoutamkumarKoppolu/DigiLog/releases)
 
@@ -73,7 +74,7 @@ For the Android project locally (needs Android Studio): `npm run cap:sync && npx
 
 ## Tech
 
-React 19 · Vite 8 · Dexie 4 (IndexedDB) · Capacitor 7 · plain CSS · Vitest. Each feature lives in `client/src/features/<name>/`. See [CLAUDE.md](CLAUDE.md) for the architecture and the rules for adding features.
+React 19 · Vite 8 · Dexie 4 (IndexedDB) · Capacitor 7 · plain CSS · Vitest. Each feature lives in `client/src/features/<name>/`. See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute, and the [architecture notes](CLAUDE.md#architecture) for how the code is organised.
 
 `server/` is a legacy Express + PostgreSQL API kept for reference only; the app doesn't use it.
 
@@ -112,3 +113,11 @@ Add an expense, turn on **Paying a credit card bill** and pick the card. Log wha
 ## Not there yet
 
 Monthly per-tag limits · separate bank/cash accounts · app lock · automatic backups · home-screen widget.
+
+## Contributing
+
+Ideas, bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up, and [SECURITY.md](SECURITY.md) to report a security problem privately.
+
+## License
+
+[GPL-3.0](LICENSE)
