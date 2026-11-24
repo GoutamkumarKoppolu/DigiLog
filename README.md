@@ -1,6 +1,6 @@
 # DigiLog stats
 
-Updated 2026-11-22 by the "Save traffic stats" workflow.
+Updated 2026-11-24 by the "Save traffic stats" workflow.
 
 - Views, last 14 days: **4** (2 unique visitors)
 - APK downloads, all releases: **54**
